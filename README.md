@@ -270,19 +270,90 @@ urlpatterns = [
 - SQLiteファイル: `db.sqlite3`
 - 管理画面URL: `http://127.0.0.1:8000/admin/`
 
-### 📋 次に実装予定
+## Herokuデプロイ設定
 
-1. **アプリケーション作成**
-   ```bash
-   python manage.py startapp accounts
-   python manage.py startapp restaurants  
-   python manage.py startapp reviews
-   python manage.py startapp reservations
-   python manage.py startapp payments
-   python manage.py startapp categories
-   python manage.py startapp admin_panel
+### settings.py修正内容
+
+1. **ALLOWED_HOSTSの設定**
+   ```python
+   ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.herokuapp.com']
    ```
 
-2. **settings.py基本設定**
-3. **カスタムユーザーモデル実装**
-4. **データベース初期設定**
+2. **WhiteNoiseミドルウェア追加**（静的ファイル配信用）
+   ```python
+   MIDDLEWARE = [
+       'django.middleware.security.SecurityMiddleware',
+       'whitenoise.middleware.WhiteNoiseMiddleware',  # Heroku静的ファイル対応
+       'django.contrib.sessions.middleware.SessionMiddleware',
+       # その他のミドルウェア...
+   ]
+   ```
+
+3. **静的ファイル設定**
+   ```python
+   STATIC_URL = '/static/'
+   
+   # Heroku静的ファイル対応
+   STATIC_ROOT = BASE_DIR / 'static'
+   STATICFILES_DIRS = [
+       BASE_DIR / 'staticfiles',
+   ]
+   ```
+
+### Herokuデプロイ手順
+
+1. **必要なパッケージインストール**
+   ```bash
+   pip install whitenoise  # 静的ファイル配信用
+   pip install gunicorn    # WSGIサーバー
+   pip install psycopg2    # PostgreSQL接続用（本番環境）
+   ```
+
+2. **requirements.txt作成**
+   ```bash
+   pip freeze > requirements.txt
+   ```
+
+3. **Procfile作成**
+   ```
+   web: gunicorn nagoyameshi_project.wsgi
+   ```
+
+4. **runtime.txt作成**（Pythonバージョン指定）
+   ```
+   python-3.13.0
+   ```
+
+5. **Herokuログイン**
+   ```bash
+   heroku login
+   ```
+
+6. **Herokuアプリ作成**
+   ```bash
+   heroku create your-app-name
+   ```
+
+7. **環境変数設定**
+   ```bash
+   heroku config:set DEBUG=False
+   heroku config:set SECRET_KEY=your-secret-key
+   ```
+
+8. **デプロイ**
+   ```bash
+   git add .
+   git commit -m "Heroku deployment setup"
+   git push heroku main
+   ```
+
+### 📋 次に実装予定
+
+1. **Herokuデプロイファイル作成**
+   - Procfile
+   - requirements.txt
+   - runtime.txt
+
+2. **環境変数の本番設定**
+3. **PostgreSQLデータベース設定**
+4. **Herokuアプリケーション作成・デプロイ**

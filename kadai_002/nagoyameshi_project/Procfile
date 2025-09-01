@@ -1,0 +1,1 @@
+web: gunicorn nagoyameshi_project.wsgi --log-file -
