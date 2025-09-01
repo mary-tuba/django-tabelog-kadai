@@ -340,20 +340,80 @@ urlpatterns = [
    heroku config:set SECRET_KEY=your-secret-key
    ```
 
-8. **デプロイ**
+8. **必要なパッケージの仮想環境での確認とrequirements.txt更新**
    ```bash
-   git add .
-   git commit -m "Heroku deployment setup"
-   git push heroku main
+   # 仮想環境をアクティベート
+   source kadai_002/nagoyameshi/bin/activate
+   
+   # プロジェクトディレクトリに移動
+   cd kadai_002/nagoyameshi_project
+   
+   # 完全なrequirements.txtを生成
+   pip freeze > requirements.txt
+   
+   # gitルートにコピー
+   cd ../..
+   cp kadai_002/nagoyameshi_project/requirements.txt .
    ```
 
-### 📋 次に実装予定
+9. **Pythonビルドパック設定**
+   ```bash
+   heroku buildpacks:set heroku/python --app nagoyameshi-20250902
+   ```
 
-1. **Herokuデプロイファイル作成**
-   - Procfile
-   - requirements.txt
-   - runtime.txt
+10. **デプロイ実行**
+    ```bash
+    git add .
+    git commit -m "Update requirements.txt with all dependencies including Django"
+    git push heroku main
+    ```
 
-2. **環境変数の本番設定**
-3. **PostgreSQLデータベース設定**
-4. **Herokuアプリケーション作成・デプロイ**
+11. **データベースマイグレーション実行**
+    ```bash
+    heroku run python kadai_002/nagoyameshi_project/manage.py migrate --app nagoyameshi-20250902
+    ```
+
+### ✅ Herokuデプロイ完了
+
+#### 2025-09-02 デプロイ成功
+- **アプリURL**: https://nagoyameshi-20250902-46d577cc9c6d.herokuapp.com/
+- **Herokuアプリ名**: nagoyameshi-20250902
+- **使用データベース**: JawsDB MariaDB (MySQL互換)
+- **Python バージョン**: 3.13.1
+
+#### 実行済み作業
+- [x] settings.pyのHeroku対応（ALLOWED_HOSTS, WhiteNoise, 静的ファイル設定）
+- [x] Procfile作成（`web: gunicorn nagoyameshi_project.wsgi --log-file -`）
+- [x] runtime.txt作成（Python 3.13.1指定）
+- [x] requirements.txt作成（Django, gunicorn, whitenoise等含む）
+- [x] JawsDB MariaDBアドオン追加
+- [x] データベース環境変数設定
+- [x] Herokuデプロイ実行
+- [x] データベースマイグレーション実行
+
+#### 設定済み環境変数
+```bash
+DB_HOST=z1ntn1zv0f1qbh8u.cbetxkdyhwsb.us-east-1.rds.amazonaws.com
+DB_DATABASE=djo0z6j9h2csgffk
+DB_USERNAME=fztcuwvx97eudjjz
+DB_PASSWORD=ic4dze3sncnc5v1z
+```
+
+#### トラブルシューティング履歴
+1. **buildpack検出失敗** → Pythonビルドパック手動設定で解決
+2. **requirements.txtの場所** → gitルートディレクトリに配置で解決
+3. **Django未インストール** → 仮想環境からの完全なrequirements.txt生成で解決
+
+### 📋 次の開発フェーズ
+
+1. **本番用settings.pyの最適化**
+   - DEBUG=Falseの設定
+   - セキュリティ設定の強化
+   
+2. **静的ファイル最適化**
+   - collectstaticの警告解決
+   
+3. **スーパーユーザー作成**
+   ```bash
+   heroku run python kadai_002/nagoyameshi_project/manage.py createsuperuser --app nagoyameshi-20250902
+   ```
