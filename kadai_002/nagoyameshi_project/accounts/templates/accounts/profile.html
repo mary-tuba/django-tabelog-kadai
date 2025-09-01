@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}マイページ - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>メニュー</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="{% url 'accounts:profile' %}" class="list-group-item list-group-item-action active">基本情報</a>
+                <a href="{% url 'accounts:profile_edit' %}" class="list-group-item list-group-item-action">プロフィール編集</a>
+                <a href="{% url 'accounts:password_change' %}" class="list-group-item list-group-item-action">パスワード変更</a>
+                {% if user.is_premium %}
+                    <a href="{% url 'accounts:premium_cancel' %}" class="list-group-item list-group-item-action">プレミアム会員解約</a>
+                {% else %}
+                    <a href="{% url 'accounts:premium_upgrade' %}" class="list-group-item list-group-item-action">プレミアム会員になる</a>
+                {% endif %}
+                <a href="#" class="list-group-item list-group-item-action">お気に入り店舗</a>
+                <a href="#" class="list-group-item list-group-item-action">予約履歴</a>
+                <a href="#" class="list-group-item list-group-item-action">レビュー履歴</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header">
+                <h3>基本情報</h3>
+            </div>
+            <div class="card-body">
+                {% if user.is_premium %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-crown"></i> <strong>プレミアム会員</strong>
+                    <p class="mb-0">全ての機能をご利用いただけます。</p>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> <strong>無料会員</strong>
+                    <p class="mb-0">プレミアム会員（月額300円）になると、レビュー投稿や予約機能をご利用いただけます。</p>
+                    <a href="{% url 'accounts:premium_upgrade' %}" class="btn btn-warning btn-sm mt-2">プレミアム会員になる</a>
+                </div>
+                {% endif %}
+                
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="150">ユーザー名</th>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>メールアドレス</th>
+                        <td>
+                            {{ user.email }}
+                            {% if user.email_verified %}
+                                <span class="badge bg-success ms-2">認証済み</span>
+                            {% else %}
+                                <span class="badge bg-warning ms-2">未認証</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>名前</th>
+                        <td>{{ user.last_name }} {{ user.first_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>フリガナ</th>
+                        <td>{{ user.furigana|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>電話番号</th>
+                        <td>{{ user.phone_number|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>住所</th>
+                        <td>{{ user.address|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>登録日</th>
+                        <td>{{ user.date_joined|date:"Y年m月d日" }}</td>
+                    </tr>
+                </table>
+                
+                <div class="mt-4">
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">編集する</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>最近のアクティビティ</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">アクティビティ機能は実装中です。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

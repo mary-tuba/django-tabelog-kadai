@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ restaurant.name }} - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>{{ restaurant.name }}</h1>
+        <p class="lead">{{ restaurant.description }}</p>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>店舗情報</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th width="120">カテゴリ</th>
+                        <td><span class="badge bg-secondary">{{ restaurant.category }}</span></td>
+                    </tr>
+                    <tr>
+                        <th>評価</th>
+                        <td>
+                            <span class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= restaurant.rating %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                {% endfor %}
+                                {{ restaurant.rating }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>住所</th>
+                        <td>{{ restaurant.address }}</td>
+                    </tr>
+                    <tr>
+                        <th>電話番号</th>
+                        <td>{{ restaurant.phone }}</td>
+                    </tr>
+                    <tr>
+                        <th>営業時間</th>
+                        <td>{{ restaurant.opening_hours }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>レビュー</h5>
+                {% if user.is_authenticated and user.is_premium %}
+                    <a href="#" class="btn btn-sm btn-primary">レビューを書く</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    {% for review in reviews %}
+                    <div class="border-bottom pb-3 mb-3">
+                        <strong>{{ review.user }}</strong>
+                        <span class="text-warning">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                    ★
+                                {% else %}
+                                    ☆
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        <p class="mb-0 mt-2">{{ review.comment }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">まだレビューがありません。</p>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <p>レビューを見るには<a href="{% url 'accounts:login' %}">ログイン</a>が必要です。</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        {% if user.is_authenticated and user.is_premium %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5>予約</h5>
+            </div>
+            <div class="card-body">
+                <p>この店舗を予約できます。</p>
+                <a href="#" class="btn btn-success btn-block">予約する</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5>お気に入り</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-outline-danger btn-block">♡ お気に入り追加</button>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header">
+                <h5>プレミアム機能</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">予約やお気に入り機能を利用するには、プレミアム会員へのアップグレードが必要です。</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'accounts:premium_upgrade' %}" class="btn btn-warning">プレミアム会員になる</a>
+                {% else %}
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-primary">会員登録</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

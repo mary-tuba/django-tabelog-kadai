@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}ログイン - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">ログイン</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">ユーザー名</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">パスワード</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">ログイン</button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="text-center">
+                    <p>アカウントをお持ちでない方は</p>
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-outline-primary">新規会員登録</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

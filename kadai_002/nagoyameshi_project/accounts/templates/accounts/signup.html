@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}会員登録 - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">会員登録</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5>会員登録について</h5>
+                    <ul class="mb-0">
+                        <li><strong>無料会員:</strong> 最新レビュー5件まで閲覧可能</li>
+                        <li><strong>プレミアム会員（月額300円）:</strong> 全機能利用可能（レビュー投稿、予約、お気に入り）</li>
+                    </ul>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">ユーザー名 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">メールアドレス <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="first_name" class="form-label">名前</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="last_name" class="form-label">姓</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="furigana" class="form-label">フリガナ</label>
+                        <input type="text" class="form-control" id="furigana" name="furigana">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password1" class="form-label">パスワード <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password1" name="password1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password2" class="form-label">パスワード（確認） <span class="text-danger">*</span></label>
+                                <input type="password" class="form-control" id="password2" name="password2" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agree_terms" name="agree_terms" required>
+                            <label class="form-check-label" for="agree_terms">
+                                <a href="#">利用規約</a>に同意する <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">会員登録</button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="text-center">
+                    <p>既にアカウントをお持ちの方は</p>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">ログイン</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

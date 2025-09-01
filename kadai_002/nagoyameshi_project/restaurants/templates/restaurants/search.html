@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>{{ page_title }}</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>検索条件</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="mb-3">
+                        <label for="keyword" class="form-label">店舗名</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" placeholder="店舗名を入力">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">カテゴリ</label>
+                        <select class="form-control" id="category" name="category">
+                            <option value="">すべてのカテゴリ</option>
+                            {% for category in categories %}
+                                <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="budget" class="form-label">予算</label>
+                        <select class="form-control" id="budget" name="budget">
+                            <option value="">指定なし</option>
+                            <option value="1">～1,000円</option>
+                            <option value="2">1,000円～2,000円</option>
+                            <option value="3">2,000円～3,000円</option>
+                            <option value="4">3,000円～</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sort" class="form-label">並び順</label>
+                        <select class="form-control" id="sort" name="sort">
+                            <option value="rating">評価順</option>
+                            <option value="created_at">登録順</option>
+                            <option value="name">名前順</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">検索</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>検索結果</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p class="mb-0">検索機能は実装中です。しばらくお待ちください。</p>
+                </div>
+                
+                <!-- ダミーの検索結果 -->
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">味仙</h6>
+                                <p class="card-text">
+                                    <span class="badge bg-secondary">台湾料理</span>
+                                    <span class="text-warning">★★★★☆ 4.5</span>
+                                </p>
+                                <a href="{% url 'restaurants:detail' 1 %}" class="btn btn-sm btn-primary">詳細を見る</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">世界の山ちゃん</h6>
+                                <p class="card-text">
+                                    <span class="badge bg-secondary">手羽先</span>
+                                    <span class="text-warning">★★★★☆ 4.2</span>
+                                </p>
+                                <a href="{% url 'restaurants:detail' 2 %}" class="btn btn-sm btn-primary">詳細を見る</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

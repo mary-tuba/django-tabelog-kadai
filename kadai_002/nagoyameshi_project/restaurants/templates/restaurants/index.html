@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+            <h1 class="display-4">NAGOYAMESHI</h1>
+            <p class="lead">名古屋B級グルメに特化したレビューアプリ</p>
+            <a class="btn btn-light btn-lg" href="{% url 'restaurants:search' %}" role="button">店舗を探す</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2>おすすめ店舗</h2>
+        <div class="row">
+            {% for restaurant in restaurants %}
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ restaurant.name }}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-secondary">{{ restaurant.category }}</span>
+                            <span class="text-warning">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= restaurant.rating %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                {% endfor %}
+                                {{ restaurant.rating }}
+                            </span>
+                        </p>
+                        <a href="{% url 'restaurants:detail' restaurant.id %}" class="btn btn-primary">詳細を見る</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted">店舗が見つかりませんでした。</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% if not user.is_authenticated %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h4>会員登録でさらに便利に！</h4>
+            <p>プレミアム会員（月額300円）なら、レビュー投稿や予約機能がご利用いただけます。</p>
+            <a href="{% url 'accounts:signup' %}" class="btn btn-primary">今すぐ会員登録</a>
+        </div>
+    </div>
+</div>
+{% elif not user.is_premium %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h4>プレミアム会員になりませんか？</h4>
+            <p>月額300円で全ての機能をご利用いただけます。</p>
+            <a href="{% url 'accounts:premium_upgrade' %}" class="btn btn-warning">プレミアム会員になる</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
