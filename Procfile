@@ -1,1 +1,1 @@
-web: gunicorn kadai_002.nagoyameshi_project.nagoyameshi_project.wsgi --log-file -
+web: cd kadai_002/nagoyameshi_project && gunicorn nagoyameshi_project.wsgi --log-file -
