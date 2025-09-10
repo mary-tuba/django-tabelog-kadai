@@ -21,6 +21,9 @@
                 <a href="#" class="list-group-item list-group-item-action">お気に入り店舗</a>
                 <a href="#" class="list-group-item list-group-item-action">予約履歴</a>
                 <a href="#" class="list-group-item list-group-item-action">レビュー履歴</a>
+                <a href="{% url 'accounts:delete_account' %}" class="list-group-item list-group-item-action text-danger">
+                    <i class="fas fa-user-times"></i> 退会手続き
+                </a>
             </div>
         </div>
     </div>
@@ -73,6 +76,10 @@
                         <td>{{ user.phone_number|default:"未設定" }}</td>
                     </tr>
                     <tr>
+                        <th>郵便番号</th>
+                        <td>{{ user.postal_code|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
                         <th>住所</th>
                         <td>{{ user.address|default:"未設定" }}</td>
                     </tr>
@@ -85,15 +92,6 @@
                 <div class="mt-4">
                     <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">編集する</a>
                 </div>
-            </div>
-        </div>
-        
-        <div class="card mt-4">
-            <div class="card-header">
-                <h5>最近のアクティビティ</h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">アクティビティ機能は実装中です。</p>
             </div>
         </div>
     </div>

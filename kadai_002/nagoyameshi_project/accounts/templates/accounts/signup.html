@@ -20,62 +20,84 @@
                 
                 <form method="POST">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">ユーザー名 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="username" name="username" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="email" class="form-label">メールアドレス <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            <small>メールアドレスがログイン時のユーザー名になります</small>
                         </div>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="first_name" class="form-label">名前</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="last_name" class="form-label">姓</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="furigana" class="form-label">フリガナ</label>
-                        <input type="text" class="form-control" id="furigana" name="furigana">
+                        <label for="{{ form.furigana.id_for_label }}" class="form-label">{{ form.furigana.label }}</label>
+                        {{ form.furigana }}
+                        {% if form.furigana.errors %}
+                            <div class="text-danger small">{{ form.furigana.errors.0 }}</div>
+                        {% endif %}
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="password1" class="form-label">パスワード <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="password1" name="password1" required>
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }} <span class="text-danger">*</span></label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <small>
+                                        ・8文字以上で入力してください<br>
+                                        ・よくあるパスワードは使用できません<br>
+                                        ・数字のみのパスワードは使用できません
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="password2" class="form-label">パスワード（確認） <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="password2" name="password2" required>
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }} <span class="text-danger">*</span></label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="agree_terms" name="agree_terms" required>
-                            <label class="form-check-label" for="agree_terms">
-                                <a href="#">利用規約</a>に同意する <span class="text-danger">*</span>
+                            {{ form.agree_terms }}
+                            <label class="form-check-label" for="{{ form.agree_terms.id_for_label }}">
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>に同意する <span class="text-danger">*</span>
                             </label>
+                            {% if form.agree_terms.errors %}
+                                <div class="text-danger small">{{ form.agree_terms.errors.0 }}</div>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -89,6 +111,43 @@
                     <p>既にアカウントをお持ちの方は</p>
                     <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">ログイン</a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 利用規約モーダル -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>第1条（規約の適用）</h6>
+                <p>この利用規約は、NAGOYAMESHI（以下「当サービス」）の利用に関して適用されます。</p>
+                
+                <h6>第2条（利用登録）</h6>
+                <p>当サービスの利用を希望する方は、本規約に同意した上で、所定の方法により利用登録を申請してください。</p>
+                
+                <h6>第3条（禁止事項）</h6>
+                <p>利用者は、以下の行為をしてはなりません：</p>
+                <ul>
+                    <li>法令または公序良俗に違反する行為</li>
+                    <li>犯罪行為に関連する行為</li>
+                    <li>他の利用者、第三者の権利を侵害する行為</li>
+                    <li>虚偽の情報を登録する行為</li>
+                </ul>
+                
+                <h6>第4条（プレミアム会員）</h6>
+                <p>プレミアム会員は月額300円の料金で、全機能をご利用いただけます。</p>
+                
+                <h6>第5条（免責）</h6>
+                <p>当サービスに関して利用者に生じた損害について、当社は一切の責任を負いません。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
             </div>
         </div>
     </div>

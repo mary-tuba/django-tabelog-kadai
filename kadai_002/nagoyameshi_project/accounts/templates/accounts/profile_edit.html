@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}プロフィール編集 - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">プロフィール編集</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- メールアドレス -->
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            <small>メールアドレスを変更するとログイン用のユーザー名も変更されます</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 姓名 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- フリガナ -->
+                    <div class="mb-3">
+                        <label for="{{ form.furigana.id_for_label }}" class="form-label">{{ form.furigana.label }}</label>
+                        {{ form.furigana }}
+                        {% if form.furigana.errors %}
+                            <div class="text-danger small">{{ form.furigana.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 郵便番号 -->
+                    <div class="mb-3">
+                        <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}</label>
+                        {{ form.postal_code }}
+                        {% if form.postal_code.errors %}
+                            <div class="text-danger small">{{ form.postal_code.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 住所 -->
+                    <div class="mb-3">
+                        <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 電話番号 -->
+                    <div class="mb-3">
+                        <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label }}</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                            <div class="text-danger small">{{ form.phone_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">キャンセル</a>
+                        <button type="submit" class="btn btn-primary">プロフィール更新</button>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <!-- パスワード変更リンク -->
+                <div class="text-center">
+                    <h5>セキュリティ設定</h5>
+                    <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-warning">パスワード変更</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

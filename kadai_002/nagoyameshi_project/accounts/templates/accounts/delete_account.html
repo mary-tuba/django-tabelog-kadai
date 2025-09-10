@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}退会手続き - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="text-center mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> 退会手続き
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- 退会についての重要な注意事項 -->
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-circle"></i> 重要：退会について</h5>
+                    <p class="mb-2"><strong>退会すると以下のデータが完全に削除され、復旧できません：</strong></p>
+                    <ul class="mb-0">
+                        <li>アカウント情報（プロフィール、メールアドレスなど）</li>
+                        <li>レビュー・評価履歴</li>
+                        <li>お気に入り店舗リスト</li>
+                        <li>予約履歴</li>
+                        <li>プレミアム会員の権限</li>
+                    </ul>
+                </div>
+                
+                <!-- 退会前の確認事項 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-clipboard-check"></i> 退会前のご確認</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>アカウント情報</h6>
+                                <p><strong>ユーザー名:</strong> {{ user.username }}</p>
+                                <p><strong>メールアドレス:</strong> {{ user.email }}</p>
+                                <p><strong>登録日:</strong> {{ user.date_joined|date:"Y年m月d日" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>会員状況</h6>
+                                {% if user.is_premium %}
+                                    <p><span class="badge bg-warning"><i class="fas fa-crown"></i> プレミアム会員</span></p>
+                                    <p class="text-warning small">
+                                        <i class="fas fa-info-circle"></i> 
+                                        プレミアム会員の解約も同時に行われます
+                                    </p>
+                                {% else %}
+                                    <p><span class="badge bg-secondary">無料会員</span></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 代替手段の提案 -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb"></i> 退会以外の選択肢</h6>
+                    <p class="mb-2">退会をお考えの理由によっては、以下の選択肢もございます：</p>
+                    <ul class="mb-2">
+                        <li><strong>一時的な休止:</strong> アカウントを残したまま利用を停止</li>
+                        <li><strong>プレミアム会員の解約:</strong> 無料会員として継続利用</li>
+                        <li><strong>プロフィールの編集:</strong> 個人情報の変更・削除</li>
+                    </ul>
+                    <div class="text-center">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-info btn-sm">プロフィール画面に戻る</a>
+                    </div>
+                </div>
+                
+                <!-- 退会フォーム -->
+                <form method="POST" id="deleteAccountForm">
+                    {% csrf_token %}
+                    
+                    <!-- パスワード確認 -->
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">{{ form.password.label }} <span class="text-danger">*</span></label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="text-danger small">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.password.help_text %}
+                            <div class="form-text">{{ form.password.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 退会理由 -->
+                    <div class="mb-3">
+                        <label for="{{ form.reason.id_for_label }}" class="form-label">{{ form.reason.label }}</label>
+                        {{ form.reason }}
+                        {% if form.reason.errors %}
+                            <div class="text-danger small">{{ form.reason.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 退会の確認チェックボックス -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.confirm_deletion }}
+                            <label class="form-check-label" for="{{ form.confirm_deletion.id_for_label }}">
+                                {{ form.confirm_deletion.label }} <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                        {% if form.confirm_deletion.errors %}
+                            <div class="text-danger small">{{ form.confirm_deletion.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.confirm_deletion.help_text %}
+                            <div class="form-text text-muted">{{ form.confirm_deletion.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 最終確認ボタン -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'accounts:profile' %}" class="btn btn-secondary">キャンセル</a>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                            <i class="fas fa-user-times"></i> 退会手続きを実行
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最終確認モーダル -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle"></i> 最終確認
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <h5>本当に退会しますか？</h5>
+                    <p class="text-muted">この操作は取り消すことができません。<br>
+                    アカウントと関連する全てのデータが完全に削除されます。</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="submitDeleteForm()">
+                    <i class="fas fa-user-times"></i> 退会を実行
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function submitDeleteForm() {
+    // モーダルを閉じてフォームを送信
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+    modal.hide();
+    document.getElementById('deleteAccountForm').submit();
+}
+
+// チェックボックスの状態によってボタンを有効/無効にする
+document.getElementById('{{ form.confirm_deletion.id_for_label }}').addEventListener('change', function() {
+    const submitButton = document.querySelector('[data-bs-target="#confirmDeleteModal"]');
+    const passwordField = document.getElementById('{{ form.password.id_for_label }}');
+    
+    if (this.checked && passwordField.value.length > 0) {
+        submitButton.disabled = false;
+        submitButton.classList.remove('disabled');
+    } else {
+        submitButton.disabled = true;
+        submitButton.classList.add('disabled');
+    }
+});
+
+// パスワードフィールドの入力状態でもボタンを制御
+document.getElementById('{{ form.password.id_for_label }}').addEventListener('input', function() {
+    const confirmCheckbox = document.getElementById('{{ form.confirm_deletion.id_for_label }}');
+    const submitButton = document.querySelector('[data-bs-target="#confirmDeleteModal"]');
+    
+    if (this.value.length > 0 && confirmCheckbox.checked) {
+        submitButton.disabled = false;
+        submitButton.classList.remove('disabled');
+    } else {
+        submitButton.disabled = true;
+        submitButton.classList.add('disabled');
+    }
+});
+
+// 初期状態でボタンを無効にする
+document.addEventListener('DOMContentLoaded', function() {
+    const submitButton = document.querySelector('[data-bs-target="#confirmDeleteModal"]');
+    submitButton.disabled = true;
+    submitButton.classList.add('disabled');
+});
+</script>
+{% endblock %}

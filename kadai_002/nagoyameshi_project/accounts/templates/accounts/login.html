@@ -13,8 +13,11 @@
                 <form method="POST">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label for="username" class="form-label">ユーザー名</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <label for="username" class="form-label">メールアドレス</label>
+                        <input type="email" class="form-control" id="username" name="username" required placeholder="example@example.com">
+                        <div class="form-text">
+                            <small>登録時のメールアドレスを入力してください</small>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
