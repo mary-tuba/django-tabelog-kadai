@@ -12,4 +12,8 @@ urlpatterns = [
     
     # 店舗検索
     path('search/', views.search, name='search'),
+    
+    # プレミアム会員限定機能
+    path('create/', views.create_restaurant, name='create'),
+    path('my-restaurants/', views.my_restaurants, name='my_restaurants'),
 ]

@@ -1,0 +1,243 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ target_user.username }} - アカウント削除確認 - 管理者パネル{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">ダッシュボード</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:user_list' %}">会員管理</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:user_detail' target_user.id %}">{{ target_user.username }}</a></li>
+<li class="breadcrumb-item active">削除確認</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="text-center mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> アカウント削除確認
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- 重要な警告 -->
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle"></i> 重要：削除に関する警告</h5>
+                    <p class="mb-2"><strong>この操作は取り消すことができません。削除されるデータ：</strong></p>
+                    <ul class="mb-0">
+                        <li>ユーザーアカウント情報（プロフィール、連絡先など）</li>
+                        <li>投稿したレビュー・評価</li>
+                        <li>予約履歴</li>
+                        <li>お気に入り登録</li>
+                        <li>その他の関連データ</li>
+                    </ul>
+                </div>
+                
+                {% if is_superuser %}
+                <!-- スーパーユーザー削除の特別警告 -->
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-crown"></i> スーパーユーザー削除に関する注意</h6>
+                    <p class="mb-0">このユーザーはスーパーユーザー権限を持っています。削除すると管理者権限も失われます。本当に削除してよろしいですか？</p>
+                </div>
+                {% endif %}
+                
+                <!-- 削除対象ユーザー情報 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-user"></i> 削除対象ユーザー情報</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <th width="30%">ID:</th>
+                                        <td>{{ target_user.id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>ユーザー名:</th>
+                                        <td>{{ target_user.username }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>名前:</th>
+                                        <td>{{ target_user.last_name }} {{ target_user.first_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>フリガナ:</th>
+                                        <td>{{ target_user.furigana|default:"未設定" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <th width="30%">メール:</th>
+                                        <td>{{ target_user.email }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>会員タイプ:</th>
+                                        <td>
+                                            {% if target_user.is_staff %}
+                                                <span class="badge bg-danger">管理者</span>
+                                            {% elif target_user.is_premium %}
+                                                <span class="badge bg-warning">プレミアム</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">一般</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>ステータス:</th>
+                                        <td>
+                                            {% if target_user.is_active %}
+                                                <span class="badge bg-success">アクティブ</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">無効</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>登録日:</th>
+                                        <td>{{ target_user.date_joined|date:"Y年m月d日" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 関連データ統計 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-bar"></i> 削除される関連データ</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                    <h4>{{ target_user.review_set.count }}</h4>
+                                    <small>レビュー</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="fas fa-calendar-alt fa-2x text-success mb-2"></i>
+                                    <h4>{{ target_user.reservation_set.count }}</h4>
+                                    <small>予約</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded">
+                                    <i class="fas fa-heart fa-2x text-danger mb-2"></i>
+                                    <h4>{% if target_user.favorites.exists %}{{ target_user.favorites.count }}{% else %}0{% endif %}</h4>
+                                    <small>お気に入り</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 代替案の提案 -->
+                <div class="card bg-light mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-lightbulb"></i> 削除以外の選択肢</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">アカウント削除の代わりに以下の選択肢もご検討ください：</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li><strong>アカウント無効化：</strong> ログイン不可にするがデータは保持</li>
+                                    <li><strong>権限変更：</strong> 管理者権限やプレミアム権限の削除</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li><strong>データエクスポート：</strong> 削除前にユーザーデータをバックアップ</li>
+                                    <li><strong>一時停止：</strong> 一定期間後に再検討</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 削除実行フォーム -->
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% if is_superuser %}
+                    <!-- スーパーユーザー削除の追加確認 -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirm_superuser_delete" 
+                                   name="confirm_superuser_delete" value="yes" required>
+                            <label class="form-check-label" for="confirm_superuser_delete">
+                                <strong class="text-warning">スーパーユーザーの削除であることを理解し、実行します</strong>
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 最終確認 -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="confirm_delete" required>
+                            <label class="form-check-label" for="confirm_delete">
+                                <strong>上記の内容を理解し、アカウントとすべての関連データの削除を実行します</strong>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 確認用ユーザー名入力 -->
+                    <div class="mb-4">
+                        <label for="confirm_username" class="form-label">
+                            確認のため、削除するユーザー名を入力してください: <strong>{{ target_user.username }}</strong>
+                        </label>
+                        <input type="text" class="form-control" id="confirm_username" 
+                               placeholder="ユーザー名を入力" required>
+                        <div class="form-text">完全一致で入力してください</div>
+                    </div>
+                    
+                    <!-- ボタン -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'admin_panel:user_detail' target_user.id %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> キャンセル
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-lg" id="delete-btn" disabled>
+                            <i class="fas fa-trash"></i> 完全削除を実行
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// フォームバリデーション
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmDelete = document.getElementById('confirm_delete');
+    const confirmUsername = document.getElementById('confirm_username');
+    const deleteBtn = document.getElementById('delete-btn');
+    const targetUsername = '{{ target_user.username }}';
+    const confirmSuperuser = document.getElementById('confirm_superuser_delete');
+    
+    function validateForm() {
+        let isValid = confirmDelete.checked && confirmUsername.value === targetUsername;
+        
+        // スーパーユーザーの場合は追加チェック
+        if (confirmSuperuser) {
+            isValid = isValid && confirmSuperuser.checked;
+        }
+        
+        deleteBtn.disabled = !isValid;
+    }
+    
+    confirmDelete.addEventListener('change', validateForm);
+    confirmUsername.addEventListener('input', validateForm);
+    if (confirmSuperuser) {
+        confirmSuperuser.addEventListener('change', validateForm);
+    }
+});
+</script>
+{% endblock %}

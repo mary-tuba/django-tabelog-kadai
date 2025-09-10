@@ -1,0 +1,148 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}管理者ユーザー作成 - 管理者パネル{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">ダッシュボード</a></li>
+<li class="breadcrumb-item active">管理者ユーザー作成</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h3 class="text-center mb-0">
+                    <i class="fas fa-user-shield"></i> 管理者ユーザー作成
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- 重要な注意事項 -->
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> 重要：管理者権限について</h6>
+                    <p class="mb-2"><strong>管理者ユーザーには以下の権限が付与されます：</strong></p>
+                    <ul class="mb-0">
+                        <li>Django管理画面へのアクセス</li>
+                        <li>管理者パネルへのアクセス</li>
+                        <li>全ユーザー・店舗・レビューの管理</li>
+                        <li>システム設定の変更</li>
+                        <li>他の管理者ユーザーの作成・削除</li>
+                    </ul>
+                </div>
+                
+                <!-- 作成フォーム -->
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- メールアドレス -->
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">管理者のメールアドレスを入力してください（ユーザー名として使用されます）</div>
+                    </div>
+                    
+                    <!-- 名前 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- フリガナ -->
+                    <div class="mb-3">
+                        <label for="{{ form.furigana.id_for_label }}" class="form-label">{{ form.furigana.label }}</label>
+                        {{ form.furigana }}
+                        {% if form.furigana.errors %}
+                            <div class="text-danger small">{{ form.furigana.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- パスワード -->
+                    <div class="mb-3">
+                        <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }} <span class="text-danger">*</span></label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                        {% if form.password1.help_text %}
+                            <div class="form-text">{{ form.password1.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- パスワード確認 -->
+                    <div class="mb-3">
+                        <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }} <span class="text-danger">*</span></label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">確認のため、同じパスワードをもう一度入力してください</div>
+                    </div>
+                    
+                    <!-- 利用規約同意 -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.agree_terms }}
+                            <label class="form-check-label" for="{{ form.agree_terms.id_for_label }}">
+                                {{ form.agree_terms.label }} <span class="text-danger">*</span>
+                            </label>
+                        </div>
+                        {% if form.agree_terms.errors %}
+                            <div class="text-danger small">{{ form.agree_terms.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 権限確認 -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6><i class="fas fa-shield-alt"></i> 付与される権限</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check text-success"></i> スタッフ権限</li>
+                                        <li><i class="fas fa-check text-success"></i> スーパーユーザー権限</li>
+                                        <li><i class="fas fa-check text-success"></i> Django管理画面アクセス</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-check text-success"></i> 管理者パネルアクセス</li>
+                                        <li><i class="fas fa-check text-success"></i> 全データの管理権限</li>
+                                        <li><i class="fas fa-check text-success"></i> システム設定権限</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ボタン -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-secondary">キャンセル</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-user-shield"></i> 管理者ユーザーを作成
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

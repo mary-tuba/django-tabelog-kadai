@@ -44,8 +44,8 @@ def signup_view(request):
             # ユーザーを作成
             user = form.save()
             
-            # 自動ログイン
-            login(request, user)
+            # 自動ログイン（バックエンドを明示的に指定）
+            login(request, user, backend='accounts.backends.EmailBackend')
             
             messages.success(request, f'{user.username}さん、会員登録が完了しました！')
             return redirect('restaurants:index')

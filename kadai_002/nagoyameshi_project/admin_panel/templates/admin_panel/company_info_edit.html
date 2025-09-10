@@ -1,0 +1,203 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}運営会社情報編集 - 管理者パネル{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">ダッシュボード</a></li>
+<li class="breadcrumb-item active">運営会社情報編集</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h3 class="text-center mb-0">
+                    <i class="fas fa-building"></i> 運営会社情報編集
+                </h3>
+            </div>
+            <div class="card-body">
+                <!-- 注意事項 -->
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> 運営会社情報について</h6>
+                    <p class="mb-2"><strong>この情報はサイトのフッター部分に表示されます：</strong></p>
+                    <ul class="mb-0">
+                        <li>会社名、住所、連絡先などの基本情報</li>
+                        <li>設立年、資本金、代表者名などの詳細情報</li>
+                        <li>事業内容の説明</li>
+                        <li>変更内容は即座に全ページに反映されます</li>
+                    </ul>
+                </div>
+                
+                <!-- 編集フォーム -->
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- 左カラム：基本情報 -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle"></i> 基本情報
+                            </h5>
+                            
+                            <!-- 会社名 -->
+                            <div class="mb-3">
+                                <label for="{{ form.company_name.id_for_label }}" class="form-label">{{ form.company_name.label }} <span class="text-danger">*</span></label>
+                                {{ form.company_name }}
+                                {% if form.company_name.errors %}
+                                    <div class="text-danger small">{{ form.company_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 住所 -->
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }} <span class="text-danger">*</span></label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">郵便番号から住所まで含めて入力してください</div>
+                            </div>
+                            
+                            <!-- 電話番号 -->
+                            <div class="mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }} <span class="text-danger">*</span></label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">例: 052-123-4567</div>
+                            </div>
+                            
+                            <!-- メールアドレス -->
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }} <span class="text-danger">*</span></label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">お問い合わせ用のメールアドレス</div>
+                            </div>
+                            
+                            <!-- 営業時間 -->
+                            <div class="mb-3">
+                                <label for="{{ form.business_hours.id_for_label }}" class="form-label">{{ form.business_hours.label }}</label>
+                                {{ form.business_hours }}
+                                {% if form.business_hours.errors %}
+                                    <div class="text-danger small">{{ form.business_hours.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">例: 平日 9:00-18:00</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右カラム：会社詳細 -->
+                        <div class="col-md-6">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-building"></i> 会社詳細
+                            </h5>
+                            
+                            <!-- 設立 -->
+                            <div class="mb-3">
+                                <label for="{{ form.established.id_for_label }}" class="form-label">{{ form.established.label }}</label>
+                                {{ form.established }}
+                                {% if form.established.errors %}
+                                    <div class="text-danger small">{{ form.established.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">例: 2020年4月</div>
+                            </div>
+                            
+                            <!-- 資本金 -->
+                            <div class="mb-3">
+                                <label for="{{ form.capital.id_for_label }}" class="form-label">{{ form.capital.label }}</label>
+                                {{ form.capital }}
+                                {% if form.capital.errors %}
+                                    <div class="text-danger small">{{ form.capital.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">例: 1,000万円</div>
+                            </div>
+                            
+                            <!-- 代表取締役 -->
+                            <div class="mb-3">
+                                <label for="{{ form.representative.id_for_label }}" class="form-label">{{ form.representative.label }}</label>
+                                {{ form.representative }}
+                                {% if form.representative.errors %}
+                                    <div class="text-danger small">{{ form.representative.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 事業内容 -->
+                            <div class="mb-3">
+                                <label for="{{ form.business_content.id_for_label }}" class="form-label">{{ form.business_content.label }}</label>
+                                {{ form.business_content }}
+                                {% if form.business_content.errors %}
+                                    <div class="text-danger small">{{ form.business_content.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">複数行で入力可能です。改行は自動的に反映されます。</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- プレビュー -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-header">
+                            <h6><i class="fas fa-eye"></i> 現在の表示内容（フッター情報）</h6>
+                        </div>
+                        <div class="card-body small">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p class="mb-2"><strong>{{ company.company_name }}</strong></p>
+                                    <p class="small mb-1">
+                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                        {{ company.address|linebreaks }}
+                                    </p>
+                                    <p class="small mb-1">
+                                        <i class="fas fa-phone me-1"></i>
+                                        {{ company.phone }}
+                                    </p>
+                                    <p class="small mb-1">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        {{ company.email }}
+                                    </p>
+                                    <p class="small">
+                                        <i class="fas fa-clock me-1"></i>
+                                        {{ company.business_hours }}
+                                    </p>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="row small">
+                                        <div class="col-sm-6">
+                                            <p class="mb-1">
+                                                <strong>設立:</strong> {{ company.established }}
+                                            </p>
+                                            <p class="mb-1">
+                                                <strong>資本金:</strong> {{ company.capital }}
+                                            </p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="mb-1">
+                                                <strong>代表取締役:</strong> {{ company.representative }}
+                                            </p>
+                                            <p class="mb-1">
+                                                <strong>事業内容:</strong>
+                                            </p>
+                                            <p class="small text-muted">{{ company.business_content|linebreaks }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ボタン -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'admin_panel:dashboard' %}" class="btn btn-secondary">キャンセル</a>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-save"></i> 運営会社情報を更新
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

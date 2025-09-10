@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}カテゴリ削除 | {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash"></i> カテゴリ削除
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <strong>注意:</strong> この操作は取り消すことができません。
+                    </div>
+                    
+                    <h5>削除対象カテゴリ</h5>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">カテゴリ名:</dt>
+                                <dd class="col-sm-9"><strong>{{ category.name }}</strong></dd>
+                                <dt class="col-sm-3">説明:</dt>
+                                <dd class="col-sm-9">{{ category.description|default:"-" }}</dd>
+                                <dt class="col-sm-3">作成日:</dt>
+                                <dd class="col-sm-9">{{ category.created_at|date:"Y年m月d日 H:i" }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    {% if restaurant_count > 0 %}
+                    <div class="alert alert-warning" role="alert">
+                        <h6><i class="fas fa-exclamation-triangle"></i> 関連データの警告</h6>
+                        <p class="mb-1">このカテゴリは現在 <strong>{{ restaurant_count }}店舗</strong> で使用されています。</p>
+                        <p class="mb-0">削除すると、これらの店舗からカテゴリ情報が削除されます。</p>
+                    </div>
+                    
+                    <h6>関連店舗:</h6>
+                    <div class="list-group mb-3" style="max-height: 200px; overflow-y: auto;">
+                        {% for restaurant in related_restaurants %}
+                        <div class="list-group-item">
+                            <strong>{{ restaurant.name }}</strong>
+                            <small class="text-muted">（ID: {{ restaurant.id }}）</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if restaurant_count > 0 %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="force_delete" name="force_delete" value="1">
+                            <label class="form-check-label text-danger" for="force_delete">
+                                <strong>関連する店舗があることを理解し、強制的に削除する</strong>
+                            </label>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_panel:category_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-danger" {% if restaurant_count > 0 %}onclick="return confirm('本当に削除しますか？関連する{{ restaurant_count }}店舗からもカテゴリ情報が削除されます。')"{% endif %}>
+                                <i class="fas fa-trash"></i> 削除実行
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

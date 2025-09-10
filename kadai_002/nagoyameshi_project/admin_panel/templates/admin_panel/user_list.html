@@ -1,0 +1,324 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}会員管理 - 管理者パネル{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">ダッシュボード</a></li>
+<li class="breadcrumb-item active">会員管理</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-users"></i> 会員管理</h1>
+    <div>
+        <a href="{% url 'admin_panel:regular_user_create' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> 新規ユーザー追加
+        </a>
+        <a href="{% url 'admin_panel:admin_user_create' %}" class="btn btn-danger">
+            <i class="fas fa-user-shield"></i> 管理者追加
+        </a>
+        <a href="#" onclick="exportCSV()" class="btn btn-success">
+            <i class="fas fa-file-csv"></i> CSV出力
+        </a>
+    </div>
+</div>
+
+<!-- 統計カード -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">総会員数</h6>
+                        <h3 class="mb-0">{{ total_users }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">アクティブ</h6>
+                        <h3 class="mb-0">{{ active_users }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-user-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">プレミアム</h6>
+                        <h3 class="mb-0">{{ premium_users }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-crown fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">管理者</h6>
+                        <h3 class="mb-0">{{ admin_users }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-user-shield fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 検索・フィルター -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">検索</label>
+                <input type="text" class="form-control" name="search" value="{{ search_query }}" 
+                       placeholder="名前、メールアドレスで検索">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">ステータス</label>
+                <select class="form-select" name="status">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>全て</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>アクティブ</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>無効</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">会員タイプ</label>
+                <select class="form-select" name="user_type">
+                    <option value="all" {% if user_type_filter == 'all' %}selected{% endif %}>全て</option>
+                    <option value="admin" {% if user_type_filter == 'admin' %}selected{% endif %}>管理者</option>
+                    <option value="premium" {% if user_type_filter == 'premium' %}selected{% endif %}>プレミアム</option>
+                    <option value="regular" {% if user_type_filter == 'regular' %}selected{% endif %}>一般</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid gap-1">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                    <button type="button" onclick="exportCSV()" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-file-csv"></i> CSV出力
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ユーザー一覧テーブル -->
+<div class="card">
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>ユーザー名</th>
+                            <th>名前</th>
+                            <th>フリガナ</th>
+                            <th>メール</th>
+                            <th>会員タイプ</th>
+                            <th>ステータス</th>
+                            <th>登録日</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_obj in page_obj %}
+                        <tr>
+                            <td>{{ user_obj.id }}</td>
+                            <td>
+                                <a href="{% url 'admin_panel:user_detail' user_obj.id %}" class="text-decoration-none">
+                                    {{ user_obj.username }}
+                                </a>
+                            </td>
+                            <td>{{ user_obj.last_name }} {{ user_obj.first_name }}</td>
+                            <td>{{ user_obj.furigana|default:"未設定" }}</td>
+                            <td>{{ user_obj.email }}</td>
+                            <td>
+                                {% if user_obj.is_staff %}
+                                    <span class="badge bg-danger">管理者</span>
+                                {% elif user_obj.is_premium %}
+                                    <span class="badge bg-warning">プレミアム</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">一般</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user_obj.is_active %}
+                                    <span class="badge bg-success">アクティブ</span>
+                                {% else %}
+                                    <span class="badge bg-danger">無効</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user_obj.date_joined|date:"Y/m/d" }}</td>
+                            <td>
+                                <a href="{% url 'admin_panel:user_detail' user_obj.id %}" 
+                                   class="btn btn-sm btn-outline-info" title="詳細">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if user_obj != user %}
+                                <form method="POST" action="{% url 'admin_panel:user_status_toggle' user_obj.id %}" 
+                                      class="d-inline" onsubmit="return confirm('ステータスを変更しますか？')">
+                                    {% csrf_token %}
+                                    {% if user_obj.is_active %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning" title="無効化">
+                                            <i class="fas fa-user-slash"></i>
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="アクティベート">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    {% endif %}
+                                </form>
+                                <a href="{% url 'admin_panel:user_delete' user_obj.id %}" 
+                                   class="btn btn-sm btn-outline-danger" title="削除"
+                                   onclick="return confirm('本当に削除しますか？この操作は取り消せません。')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- ページネーション -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="ページネーション">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if user_type_filter != 'all' %}&user_type={{ user_type_filter }}{% endif %}">最初</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if user_type_filter != 'all' %}&user_type={{ user_type_filter }}{% endif %}">前へ</a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if user_type_filter != 'all' %}&user_type={{ user_type_filter }}{% endif %}">次へ</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}{% if user_type_filter != 'all' %}&user_type={{ user_type_filter }}{% endif %}">最後</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">該当するユーザーが見つかりません</h5>
+                <p class="text-muted">検索条件を変更して再度お試しください。</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function exportCSV() {
+    // 現在の検索・フィルター条件を保持してCSVエクスポートURLを生成
+    const currentUrl = new URL(window.location);
+    const params = new URLSearchParams(currentUrl.search);
+    
+    // CSVエクスポートURLを構築
+    const exportUrl = new URL('{% url "admin_panel:user_list_csv_export" %}', window.location.origin);
+    
+    // 検索・フィルター条件をCSVエクスポートURLに追加
+    if (params.get('search')) {
+        exportUrl.searchParams.set('search', params.get('search'));
+    }
+    if (params.get('status')) {
+        exportUrl.searchParams.set('status', params.get('status'));
+    }
+    if (params.get('user_type')) {
+        exportUrl.searchParams.set('user_type', params.get('user_type'));
+    }
+    
+    // 確認ダイアログ
+    const searchQuery = params.get('search') || '';
+    const statusFilter = params.get('status') || 'all';
+    const userTypeFilter = params.get('user_type') || 'all';
+    
+    let confirmMessage = 'CSVファイルをダウンロードしますか？\n\n';
+    confirmMessage += '出力条件:\n';
+    
+    if (searchQuery) {
+        confirmMessage += `- 検索: "${searchQuery}"\n`;
+    }
+    if (statusFilter !== 'all') {
+        const statusNames = {
+            'active': 'アクティブ',
+            'inactive': '無効'
+        };
+        confirmMessage += `- ステータス: ${statusNames[statusFilter]}\n`;
+    }
+    if (userTypeFilter !== 'all') {
+        const typeNames = {
+            'admin': '管理者',
+            'premium': 'プレミアム',
+            'regular': '一般'
+        };
+        confirmMessage += `- 会員タイプ: ${typeNames[userTypeFilter]}\n`;
+    }
+    
+    if (searchQuery === '' && statusFilter === 'all' && userTypeFilter === 'all') {
+        confirmMessage += '- 全ての会員データ';
+    }
+    
+    if (confirm(confirmMessage)) {
+        // 新しいウィンドウでCSVをダウンロード
+        window.open(exportUrl.toString(), '_blank');
+    }
+}
+
+// エンターキーでの検索にも対応
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input, select');
+    
+    inputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && input.type !== 'submit') {
+                e.preventDefault();
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

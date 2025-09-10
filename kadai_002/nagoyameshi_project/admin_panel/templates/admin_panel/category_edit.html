@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}カテゴリ編集 | {% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-edit"></i> カテゴリ編集
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="name" class="form-label">カテゴリ名 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ category.name }}" required maxlength="50">
+                            <div class="form-text">50文字以内で入力してください。</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">説明</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="カテゴリの説明を入力してください（任意）">{{ category.description }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                作成日: {{ category.created_at|date:"Y年m月d日 H:i" }}<br>
+                                最終更新: {{ category.updated_at|date:"Y年m月d日 H:i" }}
+                            </small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_panel:category_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 更新
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

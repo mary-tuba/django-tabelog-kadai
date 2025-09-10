@@ -1,0 +1,289 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ user_obj.username }} - 会員詳細 - 管理者パネル{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:dashboard' %}">ダッシュボード</a></li>
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:user_list' %}">会員管理</a></li>
+<li class="breadcrumb-item active">{{ user_obj.username }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- ユーザー基本情報 -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user"></i> 基本情報
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-user-circle fa-4x text-muted"></i>
+                    <h5 class="mt-2">{{ user_obj.username }}</h5>
+                    
+                    <!-- ステータスバッジ -->
+                    <div class="mb-2">
+                        {% if user_obj.is_staff %}
+                            <span class="badge bg-danger fs-6">管理者</span>
+                        {% elif user_obj.is_premium %}
+                            <span class="badge bg-warning fs-6">プレミアム</span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">一般</span>
+                        {% endif %}
+                        
+                        {% if user_obj.is_active %}
+                            <span class="badge bg-success fs-6">アクティブ</span>
+                        {% else %}
+                            <span class="badge bg-danger fs-6">無効</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <th width="40%">ID:</th>
+                        <td>{{ user_obj.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>名前:</th>
+                        <td>{{ user_obj.last_name }} {{ user_obj.first_name|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>フリガナ:</th>
+                        <td>{{ user_obj.furigana|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>メール:</th>
+                        <td>{{ user_obj.email }}</td>
+                    </tr>
+                    <tr>
+                        <th>電話番号:</th>
+                        <td>{{ user_obj.phone_number|default:"未設定" }}</td>
+                    </tr>
+                    <tr>
+                        <th>住所:</th>
+                        <td>
+                            {% if user_obj.postal_code %}
+                                〒{{ user_obj.postal_code }}<br>
+                            {% endif %}
+                            {{ user_obj.address|default:"未設定" }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>登録日:</th>
+                        <td>{{ user_obj.date_joined|date:"Y年m月d日 H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>最終ログイン:</th>
+                        <td>{{ user_obj.last_login|date:"Y年m月d日 H:i"|default:"未ログイン" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 操作メニュー -->
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-cogs"></i> 管理操作
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <!-- パスワードリセット -->
+                    <a href="{% url 'admin_panel:user_password_reset' user_obj.id %}" 
+                       class="btn btn-warning btn-sm">
+                        <i class="fas fa-key"></i> パスワードリセット
+                    </a>
+                    
+                    <!-- ステータス切り替え -->
+                    {% if user_obj != user %}
+                    <form method="POST" action="{% url 'admin_panel:user_status_toggle' user_obj.id %}" 
+                          onsubmit="return confirm('ステータスを変更しますか？')">
+                        {% csrf_token %}
+                        {% if user_obj.is_active %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-user-slash"></i> アカウント無効化
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-user-check"></i> アカウント有効化
+                            </button>
+                        {% endif %}
+                    </form>
+                    {% endif %}
+                    
+                    <!-- プレミアム切り替え -->
+                    <form method="POST" action="{% url 'admin_panel:user_premium_toggle' user_obj.id %}" 
+                          onsubmit="return confirm('プレミアム状態を変更しますか？')">
+                        {% csrf_token %}
+                        {% if user_obj.is_premium %}
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-crown"></i> プレミアム解除
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-crown"></i> プレミアム付与
+                            </button>
+                        {% endif %}
+                    </form>
+                    
+                    <!-- アカウント削除 -->
+                    <hr>
+                    <a href="{% url 'admin_panel:user_delete' user_obj.id %}" 
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('本当に削除しますか？この操作は取り消せません。関連データも全て削除されます。')">
+                        <i class="fas fa-trash"></i> アカウント削除
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- 統計情報 -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-star fa-2x mb-2"></i>
+                        <h4>{{ review_count }}</h4>
+                        <small>レビュー投稿数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                        <h4>{{ reservation_count }}</h4>
+                        <small>予約回数</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-heart fa-2x mb-2"></i>
+                        <h4>{{ favorite_count }}</h4>
+                        <small>お気に入り数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- タブメニュー -->
+        <ul class="nav nav-tabs" id="userTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="reviews-tab" data-bs-toggle="tab" 
+                        data-bs-target="#reviews" type="button" role="tab">
+                    <i class="fas fa-star"></i> レビュー履歴
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reservations-tab" data-bs-toggle="tab" 
+                        data-bs-target="#reservations" type="button" role="tab">
+                    <i class="fas fa-calendar-alt"></i> 予約履歴
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="favorites-tab" data-bs-toggle="tab" 
+                        data-bs-target="#favorites" type="button" role="tab">
+                    <i class="fas fa-heart"></i> お気に入り
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="userTabsContent">
+            <!-- レビュー履歴 -->
+            <div class="tab-pane fade show active" id="reviews" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if user_reviews %}
+                            {% for review in user_reviews %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6>{{ review.restaurant.name }}</h6>
+                                            <div class="text-warning mb-2">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= review.rating %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <p class="mb-1">{{ review.comment|truncatechars:100 }}</p>
+                                        </div>
+                                        <small class="text-muted">{{ review.created_at|date:"Y/m/d" }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-4">レビューがありません</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 予約履歴 -->
+            <div class="tab-pane fade" id="reservations" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if user_reservations %}
+                            {% for reservation in user_reservations %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6>{{ reservation.restaurant.name }}</h6>
+                                            <p class="mb-1">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ reservation.reservation_date|date:"Y年m月d日" }}
+                                                {{ reservation.reservation_time }}
+                                            </p>
+                                            <p class="mb-1">
+                                                <i class="fas fa-users me-1"></i>
+                                                {{ reservation.party_size }}名
+                                            </p>
+                                            <span class="badge bg-info">{{ reservation.get_status_display }}</span>
+                                        </div>
+                                        <small class="text-muted">{{ reservation.created_at|date:"Y/m/d" }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-4">予約履歴がありません</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- お気に入り -->
+            <div class="tab-pane fade" id="favorites" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if user_favorites %}
+                            {% for favorite in user_favorites %}
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6>{{ favorite.restaurant.name }}</h6>
+                                            <p class="mb-0 text-muted small">{{ favorite.restaurant.address }}</p>
+                                        </div>
+                                        <small class="text-muted">{{ favorite.created_at|date:"Y/m/d" }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-4">お気に入りがありません</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
