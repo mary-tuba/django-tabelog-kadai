@@ -16,7 +16,7 @@ from reviews.models import Review
 from reservations.models import Reservation
 from categories.models import Category
 from .models import CompanyInfo
-from .forms import CompanyInfoForm
+from .forms import CompanyInfoForm, AdminRestaurantCreateForm
 
 User = get_user_model()
 
@@ -49,19 +49,179 @@ def dashboard(request):
 
 @staff_member_required
 def restaurant_list(request):
-    return HttpResponse('<h1>店舗管理</h1><p>工事中です</p>')
+    """店舗管理 - 店舗一覧"""
+    # 検索・フィルタリング機能
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    category_filter = request.GET.get('category', 'all')
+    
+    # ベースクエリ
+    restaurants = Restaurant.objects.select_related('category').order_by('-created_at')
+    
+    # 検索機能
+    if search_query:
+        restaurants = restaurants.filter(
+            models.Q(name__icontains=search_query) |
+            models.Q(description__icontains=search_query) |
+            models.Q(address__icontains=search_query)
+        )
+    
+    # ステータスフィルター
+    if status_filter == 'pending':
+        restaurants = restaurants.filter(is_active=False)
+    elif status_filter == 'approved':
+        restaurants = restaurants.filter(is_active=True)
+    
+    # カテゴリフィルター
+    if category_filter != 'all':
+        restaurants = restaurants.filter(category_id=category_filter)
+    
+    # ページネーション
+    from django.core.paginator import Paginator
+    paginator = Paginator(restaurants, 20)  # 1ページに20件表示
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 統計情報
+    total_restaurants = Restaurant.objects.count()
+    pending_restaurants = Restaurant.objects.filter(is_active=False).count()
+    approved_restaurants = Restaurant.objects.filter(is_active=True).count()
+    
+    # カテゴリ一覧（フィルター用）
+    categories = Category.objects.all().order_by('name')
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'category_filter': category_filter,
+        'categories': categories,
+        'total_restaurants': total_restaurants,
+        'pending_restaurants': pending_restaurants,
+        'approved_restaurants': approved_restaurants,
+    }
+    
+    return render(request, 'admin_panel/restaurant_list.html', context)
 
 @staff_member_required
 def restaurant_create(request):
-    return HttpResponse('<h1>店舗登録</h1><p>工事中です</p>')
+    """管理者用店舗作成"""
+    if request.method == 'POST':
+        form = AdminRestaurantCreateForm(request.POST)
+        if form.is_valid():
+            restaurant = form.save()
+            if restaurant.is_active:
+                messages.success(request, f'店舗「{restaurant.name}」を作成し、承認済み状態で公開しました。')
+            else:
+                messages.success(request, f'店舗「{restaurant.name}」を作成しました。承認待ち状態です。')
+            return redirect('admin_panel:restaurant_list')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{form.fields[field].label if field != "__all__" else ""}: {error}')
+    else:
+        form = AdminRestaurantCreateForm()
+    
+    context = {
+        'form': form
+    }
+    
+    return render(request, 'admin_panel/restaurant_create.html', context)
 
 @staff_member_required
 def restaurant_edit(request, restaurant_id):
-    return HttpResponse(f'<h1>店舗編集</h1><p>店舗ID: {restaurant_id}</p><p>工事中です</p>')
+    """店舗詳細・編集"""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    
+    if request.method == 'POST':
+        # 基本情報の更新
+        restaurant.name = request.POST.get('name', '').strip()
+        restaurant.description = request.POST.get('description', '').strip()
+        restaurant.address = request.POST.get('address', '').strip()
+        restaurant.phone_number = request.POST.get('phone_number', '').strip()
+        restaurant.opening_hours = request.POST.get('opening_hours', '').strip()
+        restaurant.closed_days = request.POST.get('closed_days', '').strip()
+        restaurant.postal_code = request.POST.get('postal_code', '').strip()
+        
+        # カテゴリの更新
+        category_id = request.POST.get('category')
+        if category_id:
+            try:
+                restaurant.category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                messages.error(request, '選択されたカテゴリが見つかりません。')
+                
+        # 予算の更新
+        try:
+            budget_min = request.POST.get('budget_min')
+            budget_max = request.POST.get('budget_max')
+            restaurant.budget_min = int(budget_min) if budget_min else 0
+            restaurant.budget_max = int(budget_max) if budget_max else 5000
+        except ValueError:
+            messages.error(request, '予算は数値で入力してください。')
+        
+        # 承認状態の更新
+        is_active = request.POST.get('is_active') == '1'
+        restaurant.is_active = is_active
+        
+        if not messages.get_messages(request):
+            restaurant.save()
+            messages.success(request, f'店舗「{restaurant.name}」を更新しました。')
+            return redirect('admin_panel:restaurant_list')
+    
+    # カテゴリ一覧
+    categories = Category.objects.all().order_by('name')
+    
+    context = {
+        'restaurant': restaurant,
+        'categories': categories,
+    }
+    
+    return render(request, 'admin_panel/restaurant_edit.html', context)
+
+
+@staff_member_required
+def restaurant_approve(request, restaurant_id):
+    """店舗承認"""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    
+    if request.method == 'POST':
+        restaurant.is_active = True
+        restaurant.save()
+        messages.success(request, f'店舗「{restaurant.name}」を承認しました。サイトに公開されます。')
+    
+    return redirect('admin_panel:restaurant_list')
+
+
+@staff_member_required
+def restaurant_reject(request, restaurant_id):
+    """店舗非承認"""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    
+    if request.method == 'POST':
+        restaurant.is_active = False
+        restaurant.save()
+        messages.warning(request, f'店舗「{restaurant.name}」を非承認にしました。サイトから非公開になります。')
+    
+    return redirect('admin_panel:restaurant_list')
+
 
 @staff_member_required
 def restaurant_delete(request, restaurant_id):
-    return HttpResponse(f'<h1>店舗削除</h1><p>店舗ID: {restaurant_id}</p><p>工事中です</p>')
+    """店舗削除"""
+    restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+    
+    if request.method == 'POST':
+        restaurant_name = restaurant.name
+        restaurant.delete()
+        messages.success(request, f'店舗「{restaurant_name}」を削除しました。')
+        return redirect('admin_panel:restaurant_list')
+    
+    context = {
+        'restaurant': restaurant
+    }
+    
+    return render(request, 'admin_panel/restaurant_delete.html', context)
 
 @staff_member_required
 def user_list(request):

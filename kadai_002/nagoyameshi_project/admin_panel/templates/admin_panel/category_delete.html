@@ -1,6 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'admin_panel/base.html' %}
 
 {% block title %}カテゴリ削除 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:category_list' %}">カテゴリ管理</a></li>
+<li class="breadcrumb-item active">カテゴリ削除</li>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">

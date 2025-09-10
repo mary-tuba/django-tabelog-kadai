@@ -16,35 +16,47 @@
                 <table class="table table-borderless">
                     <tr>
                         <th width="120">カテゴリ</th>
-                        <td><span class="badge bg-secondary">{{ restaurant.category }}</span></td>
+                        <td><span class="badge bg-secondary">{{ restaurant.category.name }}</span></td>
                     </tr>
+                    {% if restaurant.budget_min or restaurant.budget_max %}
                     <tr>
-                        <th>評価</th>
+                        <th>予算</th>
                         <td>
-                            <span class="text-warning">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= restaurant.rating %}
-                                        ★
-                                    {% else %}
-                                        ☆
-                                    {% endif %}
-                                {% endfor %}
-                                {{ restaurant.rating }}
+                            <span class="text-success">
+                                <i class="fas fa-yen-sign"></i> 
+                                {{ restaurant.budget_min|default:0 }}円〜{{ restaurant.budget_max|default:5000 }}円
                             </span>
                         </td>
                     </tr>
+                    {% endif %}
+                    {% if restaurant.postal_code %}
+                    <tr>
+                        <th>郵便番号</th>
+                        <td>{{ restaurant.postal_code }}</td>
+                    </tr>
+                    {% endif %}
                     <tr>
                         <th>住所</th>
                         <td>{{ restaurant.address }}</td>
                     </tr>
+                    {% if restaurant.phone_number %}
                     <tr>
                         <th>電話番号</th>
-                        <td>{{ restaurant.phone }}</td>
+                        <td>{{ restaurant.phone_number }}</td>
                     </tr>
+                    {% endif %}
+                    {% if restaurant.opening_hours %}
                     <tr>
                         <th>営業時間</th>
                         <td>{{ restaurant.opening_hours }}</td>
                     </tr>
+                    {% endif %}
+                    {% if restaurant.closed_days %}
+                    <tr>
+                        <th>定休日</th>
+                        <td>{{ restaurant.closed_days }}</td>
+                    </tr>
+                    {% endif %}
                 </table>
             </div>
         </div>
@@ -58,23 +70,11 @@
             </div>
             <div class="card-body">
                 {% if user.is_authenticated %}
-                    {% for review in reviews %}
-                    <div class="border-bottom pb-3 mb-3">
-                        <strong>{{ review.user }}</strong>
-                        <span class="text-warning">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= review.rating %}
-                                    ★
-                                {% else %}
-                                    ☆
-                                {% endif %}
-                            {% endfor %}
-                        </span>
-                        <p class="mb-0 mt-2">{{ review.comment }}</p>
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">レビュー機能は現在開発中です。</p>
+                        <p class="text-muted">今後のアップデートをお待ちください。</p>
                     </div>
-                    {% empty %}
-                    <p class="text-muted">まだレビューがありません。</p>
-                    {% endfor %}
                 {% else %}
                     <div class="alert alert-info">
                         <p>レビューを見るには<a href="{% url 'accounts:login' %}">ログイン</a>が必要です。</p>

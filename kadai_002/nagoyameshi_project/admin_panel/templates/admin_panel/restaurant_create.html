@@ -1,0 +1,207 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}店舗作成 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:restaurant_list' %}">店舗管理</a></li>
+<li class="breadcrumb-item active">店舗作成</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-plus"></i> 新規店舗作成
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <h6><i class="fas fa-info-circle"></i> 管理者による店舗作成</h6>
+                    <p class="mb-0">管理者として店舗を直接作成できます。承認状態を選択して即座に公開することも可能です。</p>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- 左カラム：基本情報 -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle"></i> 基本情報
+                            </h5>
+                            
+                            <!-- 店舗名 -->
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    {{ form.name.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- カテゴリ -->
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    {{ form.category.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 店舗説明 -->
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    {{ form.description.label }}
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">店舗の特徴、雰囲気、おすすめ料理などをご記入ください</div>
+                            </div>
+                            
+                            <!-- 承認状態 -->
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        <strong>{{ form.is_active.label }}</strong>
+                                    </label>
+                                    {% if form.is_active.help_text %}
+                                        <div class="form-text">{{ form.is_active.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右カラム：所在地・営業情報 -->
+                        <div class="col-md-6">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-map-marker-alt"></i> 所在地・連絡先
+                            </h5>
+                            
+                            <!-- 郵便番号 -->
+                            <div class="mb-3">
+                                <label for="{{ form.postal_code.id_for_label }}" class="form-label">
+                                    {{ form.postal_code.label }}
+                                </label>
+                                {{ form.postal_code }}
+                                {% if form.postal_code.errors %}
+                                    <div class="text-danger small">{{ form.postal_code.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 住所 -->
+                            <div class="mb-3">
+                                <label for="{{ form.address.id_for_label }}" class="form-label">
+                                    {{ form.address.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.address }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger small">{{ form.address.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 電話番号 -->
+                            <div class="mb-3">
+                                <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                    {{ form.phone_number.label }}
+                                </label>
+                                {{ form.phone_number }}
+                                {% if form.phone_number.errors %}
+                                    <div class="text-danger small">{{ form.phone_number.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <h5 class="text-warning mb-3 mt-4">
+                                <i class="fas fa-clock"></i> 営業情報
+                            </h5>
+                            
+                            <!-- 営業時間 -->
+                            <div class="mb-3">
+                                <label for="{{ form.opening_hours.id_for_label }}" class="form-label">
+                                    {{ form.opening_hours.label }}
+                                </label>
+                                {{ form.opening_hours }}
+                                {% if form.opening_hours.errors %}
+                                    <div class="text-danger small">{{ form.opening_hours.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 定休日 -->
+                            <div class="mb-3">
+                                <label for="{{ form.closed_days.id_for_label }}" class="form-label">
+                                    {{ form.closed_days.label }}
+                                </label>
+                                {{ form.closed_days }}
+                                {% if form.closed_days.errors %}
+                                    <div class="text-danger small">{{ form.closed_days.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 予算情報 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-info mb-3">
+                                <i class="fas fa-yen-sign"></i> 予算情報
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.budget_min.id_for_label }}" class="form-label">
+                                    {{ form.budget_min.label }}
+                                </label>
+                                {{ form.budget_min }}
+                                {% if form.budget_min.errors %}
+                                    <div class="text-danger small">{{ form.budget_min.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.budget_max.id_for_label }}" class="form-label">
+                                    {{ form.budget_max.label }}
+                                </label>
+                                {{ form.budget_max }}
+                                {% if form.budget_max.errors %}
+                                    <div class="text-danger small">{{ form.budget_max.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- フォームエラー表示 -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- ボタン -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'admin_panel:restaurant_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 店舗一覧に戻る
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 店舗を作成
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

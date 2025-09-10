@@ -1,0 +1,190 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}店舗編集 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:restaurant_list' %}">店舗管理</a></li>
+<li class="breadcrumb-item active">店舗編集</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit"></i> 店舗編集 - {{ restaurant.name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- 店舗基本情報 -->
+                <div class="alert alert-info mb-4">
+                    <h6><i class="fas fa-info-circle"></i> 店舗基本情報</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">登録ID:</dt>
+                        <dd class="col-sm-9">{{ restaurant.id }}</dd>
+                        <dt class="col-sm-3">登録日時:</dt>
+                        <dd class="col-sm-9">{{ restaurant.created_at|date:"Y年m月d日 H:i" }}</dd>
+                        <dt class="col-sm-3">最終更新:</dt>
+                        <dd class="col-sm-9">{{ restaurant.updated_at|date:"Y年m月d日 H:i" }}</dd>
+                        <dt class="col-sm-3">現在の状態:</dt>
+                        <dd class="col-sm-9">
+                            {% if restaurant.is_active %}
+                                <span class="badge bg-success">承認済み</span>
+                            {% else %}
+                                <span class="badge bg-warning">承認待ち</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- 左カラム：基本情報 -->
+                        <div class="col-md-6">
+                            <h5 class="text-primary mb-3">
+                                <i class="fas fa-info-circle"></i> 基本情報
+                            </h5>
+                            
+                            <!-- 店舗名 -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label">
+                                    店舗名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ restaurant.name }}" required maxlength="100">
+                            </div>
+                            
+                            <!-- カテゴリ -->
+                            <div class="mb-3">
+                                <label for="category" class="form-label">
+                                    カテゴリ <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">カテゴリを選択してください</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if restaurant.category.id == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- 店舗説明 -->
+                            <div class="mb-3">
+                                <label for="description" class="form-label">店舗説明</label>
+                                <textarea class="form-control" id="description" name="description" rows="4" 
+                                          placeholder="店舗の特徴、雰囲気、おすすめ料理などをご記入ください">{{ restaurant.description }}</textarea>
+                            </div>
+                            
+                            <!-- 承認状態 -->
+                            <div class="mb-3">
+                                <label class="form-label">承認状態</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="approved" value="1" 
+                                           {% if restaurant.is_active %}checked{% endif %}>
+                                    <label class="form-check-label text-success" for="approved">
+                                        <i class="fas fa-check"></i> 承認済み（公開中）
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="is_active" id="pending" value="0" 
+                                           {% if not restaurant.is_active %}checked{% endif %}>
+                                    <label class="form-check-label text-warning" for="pending">
+                                        <i class="fas fa-hourglass-half"></i> 承認待ち（非公開）
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右カラム：詳細情報 -->
+                        <div class="col-md-6">
+                            <h5 class="text-success mb-3">
+                                <i class="fas fa-map-marker-alt"></i> 所在地・連絡先
+                            </h5>
+                            
+                            <!-- 郵便番号 -->
+                            <div class="mb-3">
+                                <label for="postal_code" class="form-label">郵便番号</label>
+                                <input type="text" class="form-control" id="postal_code" name="postal_code" 
+                                       value="{{ restaurant.postal_code }}" placeholder="1234567（ハイフンなし）">
+                            </div>
+                            
+                            <!-- 住所 -->
+                            <div class="mb-3">
+                                <label for="address" class="form-label">
+                                    住所 <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="address" name="address" rows="2" required 
+                                          placeholder="都道府県から番地まで入力してください">{{ restaurant.address }}</textarea>
+                            </div>
+                            
+                            <!-- 電話番号 -->
+                            <div class="mb-3">
+                                <label for="phone_number" class="form-label">電話番号</label>
+                                <input type="text" class="form-control" id="phone_number" name="phone_number" 
+                                       value="{{ restaurant.phone_number }}" placeholder="03-1234-5678">
+                            </div>
+                            
+                            <h5 class="text-warning mb-3 mt-4">
+                                <i class="fas fa-clock"></i> 営業情報
+                            </h5>
+                            
+                            <!-- 営業時間 -->
+                            <div class="mb-3">
+                                <label for="opening_hours" class="form-label">営業時間</label>
+                                <input type="text" class="form-control" id="opening_hours" name="opening_hours" 
+                                       value="{{ restaurant.opening_hours }}" placeholder="11:00-22:00 (L.O.21:30)">
+                            </div>
+                            
+                            <!-- 定休日 -->
+                            <div class="mb-3">
+                                <label for="closed_days" class="form-label">定休日</label>
+                                <input type="text" class="form-control" id="closed_days" name="closed_days" 
+                                       value="{{ restaurant.closed_days }}" placeholder="毎週月曜日、第3日曜日">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 予算情報 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="text-info mb-3">
+                                <i class="fas fa-yen-sign"></i> 予算情報
+                            </h5>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="budget_min" class="form-label">予算下限（円）</label>
+                                <input type="number" class="form-control" id="budget_min" name="budget_min" 
+                                       value="{{ restaurant.budget_min }}" min="0" step="100" placeholder="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="budget_max" class="form-label">予算上限（円）</label>
+                                <input type="number" class="form-control" id="budget_max" name="budget_max" 
+                                       value="{{ restaurant.budget_max }}" min="0" step="100" placeholder="3000">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ボタン -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'admin_panel:restaurant_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 店舗一覧に戻る
+                        </a>
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 更新
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

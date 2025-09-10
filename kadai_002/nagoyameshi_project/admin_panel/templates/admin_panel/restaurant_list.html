@@ -1,0 +1,223 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}店舗管理 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">店舗管理</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-store"></i> 店舗管理</h1>
+    <a href="{% url 'admin_panel:restaurant_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> 新規店舗作成
+    </a>
+</div>
+
+<!-- 統計カード -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">総店舗数</h6>
+                        <h4 class="mb-0">{{ total_restaurants }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-store fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">承認待ち</h6>
+                        <h4 class="mb-0">{{ pending_restaurants }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-hourglass-half fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">承認済み</h6>
+                        <h4 class="mb-0">{{ approved_restaurants }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 検索・フィルター -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">キーワード検索</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search_query }}" placeholder="店舗名、説明、住所で検索">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="status" class="form-label">承認状態</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>すべて</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>承認待ち</option>
+                    <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>承認済み</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="category" class="form-label">カテゴリ</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="all" {% if category_filter == 'all' %}selected{% endif %}>すべて</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> 検索
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 店舗一覧 -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">店舗一覧 ({{ page_obj.paginator.count }}件)</h5>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>店舗名</th>
+                            <th>カテゴリ</th>
+                            <th>住所</th>
+                            <th>承認状態</th>
+                            <th>登録日</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for restaurant in page_obj %}
+                        <tr>
+                            <td>{{ restaurant.id }}</td>
+                            <td>
+                                <strong>{{ restaurant.name }}</strong>
+                                {% if restaurant.description %}
+                                    <br><small class="text-muted">{{ restaurant.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ restaurant.category.name }}</span>
+                            </td>
+                            <td>{{ restaurant.address|truncatechars:30 }}</td>
+                            <td>
+                                {% if restaurant.is_active %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> 承認済み
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-hourglass-half"></i> 承認待ち
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ restaurant.created_at|date:"Y/m/d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'admin_panel:restaurant_edit' restaurant.id %}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-edit"></i> 編集
+                                </a>
+                                {% if not restaurant.is_active %}
+                                    <form method="post" action="{% url 'admin_panel:restaurant_approve' restaurant.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-success me-1">
+                                            <i class="fas fa-check"></i> 承認
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{% url 'admin_panel:restaurant_reject' restaurant.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-warning me-1">
+                                            <i class="fas fa-times"></i> 非承認
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                <a href="{% url 'admin_panel:restaurant_delete' restaurant.id %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i> 削除
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- ページネーション -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="ページネーション" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if category_filter != 'all' %}category={{ category_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">前へ</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if category_filter != 'all' %}category={{ category_filter }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}{% if category_filter != 'all' %}category={{ category_filter }}&{% endif %}page={{ page_obj.next_page_number }}">次へ</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-store fa-3x text-muted mb-3"></i>
+                <p class="text-muted">店舗が見つかりませんでした。</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

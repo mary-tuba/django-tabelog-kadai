@@ -83,6 +83,10 @@
                            href="{% url 'admin_panel:restaurant_list' %}">
                             <i class="fas fa-store me-2"></i> 店舗管理
                         </a>
+                        <a class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'admin_panel:category_list' %}">
+                            <i class="fas fa-tags me-2"></i> カテゴリ管理
+                        </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'review_list' %}active{% endif %}" 
                            href="{% url 'admin_panel:review_list' %}">
                             <i class="fas fa-star me-2"></i> レビュー管理

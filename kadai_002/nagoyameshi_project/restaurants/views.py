@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib import messages
 from accounts.decorators import premium_required
@@ -8,37 +8,26 @@ from .models import Restaurant
 
 def index(request):
     """店舗一覧ページ（トップページ）"""
+    # 承認済みの店舗をランダムに5件取得
+    restaurants = Restaurant.objects.filter(is_active=True).select_related('category').order_by('?')[:5]
+    
     context = {
         'page_title': '店舗一覧',
-        'restaurants': [
-            {'id': 1, 'name': '味仙', 'category': '台湾料理', 'rating': 4.5},
-            {'id': 2, 'name': '世界の山ちゃん', 'category': '手羽先', 'rating': 4.2},
-            {'id': 3, 'name': 'コメダ珈琲店', 'category': '喫茶', 'rating': 4.0},
-        ]
+        'restaurants': restaurants,
     }
     return render(request, 'restaurants/index.html', context)
 
 
 def detail(request, restaurant_id):
     """店舗詳細ページ"""
-    # ダミーデータ
-    restaurant = {
-        'id': restaurant_id,
-        'name': '味仙',
-        'category': '台湾料理',
-        'rating': 4.5,
-        'description': '名古屋名物の台湾料理店です。',
-        'address': '愛知県名古屋市中区大須3-6-18',
-        'phone': '052-241-5565',
-        'opening_hours': '11:00-23:00',
-    }
+    # 承認済みの店舗のみ表示
+    restaurant = get_object_or_404(
+        Restaurant.objects.select_related('category').filter(is_active=True), 
+        id=restaurant_id
+    )
     
     context = {
         'restaurant': restaurant,
-        'reviews': [
-            {'user': 'user1', 'rating': 5, 'comment': '美味しかったです！'},
-            {'user': 'user2', 'rating': 4, 'comment': '辛いけど癖になる味。'},
-        ]
     }
     return render(request, 'restaurants/detail.html', context)
 

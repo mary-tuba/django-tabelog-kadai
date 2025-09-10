@@ -126,6 +126,14 @@ class RestaurantCreateForm(forms.ModelForm):
         budget_min = cleaned_data.get('budget_min')
         budget_max = cleaned_data.get('budget_max')
         
+        # 空の予算値をデフォルト値に設定
+        if budget_min is None or budget_min == '':
+            cleaned_data['budget_min'] = 0
+            budget_min = 0
+        if budget_max is None or budget_max == '':
+            cleaned_data['budget_max'] = 5000
+            budget_max = 5000
+        
         # 予算の整合性チェック
         if budget_min is not None and budget_max is not None:
             if budget_min > budget_max:
@@ -147,6 +155,12 @@ class RestaurantCreateForm(forms.ModelForm):
     def save(self, commit=True):
         """保存時の処理"""
         restaurant = super().save(commit=False)
+        
+        # 予算の空の値をデフォルト値で置き換え
+        if restaurant.budget_min is None:
+            restaurant.budget_min = 0
+        if restaurant.budget_max is None:
+            restaurant.budget_max = 5000
         
         # 承認待ち状態で保存（管理者が承認するまで非公開）
         restaurant.is_active = False  # 管理者承認待ち

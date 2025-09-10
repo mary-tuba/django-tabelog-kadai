@@ -11,6 +11,8 @@ urlpatterns = [
     path('restaurants/', views.restaurant_list, name='restaurant_list'),
     path('restaurants/create/', views.restaurant_create, name='restaurant_create'),
     path('restaurants/<int:restaurant_id>/edit/', views.restaurant_edit, name='restaurant_edit'),
+    path('restaurants/<int:restaurant_id>/approve/', views.restaurant_approve, name='restaurant_approve'),
+    path('restaurants/<int:restaurant_id>/reject/', views.restaurant_reject, name='restaurant_reject'),
     path('restaurants/<int:restaurant_id>/delete/', views.restaurant_delete, name='restaurant_delete'),
     
     # 会員管理
