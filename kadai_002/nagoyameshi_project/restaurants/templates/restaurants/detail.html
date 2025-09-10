@@ -62,22 +62,71 @@
         </div>
 
         <div class="card">
-            <div class="card-header">
-                <h5>レビュー</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">レビュー</h5>
                 {% if user.is_authenticated and user.is_premium %}
-                    <a href="#" class="btn btn-sm btn-primary">レビューを書く</a>
+                    {% if user_review %}
+                        <div>
+                            <a href="{% url 'reviews:edit_review' user_review.id %}" class="btn btn-sm btn-outline-primary me-1">
+                                <i class="fas fa-edit"></i> 編集
+                            </a>
+                            <a href="{% url 'reviews:delete_review' user_review.id %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i> 削除
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'reviews:create_review' restaurant.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-star"></i> レビューを書く
+                        </a>
+                    {% endif %}
                 {% endif %}
             </div>
             <div class="card-body">
-                {% if user.is_authenticated %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-star fa-2x text-muted mb-3"></i>
-                        <p class="text-muted">レビュー機能は現在開発中です。</p>
-                        <p class="text-muted">今後のアップデートをお待ちください。</p>
+                {% if user.is_authenticated and user.is_premium %}
+                    {% if reviews %}
+                        {% for review in reviews %}
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ review.user.username }}</strong>
+                                    {% if review.user == user %}
+                                        <span class="badge bg-primary">あなた</span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">{{ review.created_at|date:"Y年m月d日" }}</small>
+                            </div>
+                            <div class="text-warning my-2">
+                                {{ review.star_display }}
+                                <span class="ms-2 text-dark">{{ review.rating }}/5</span>
+                            </div>
+                            {% if review.comment %}
+                                <p class="mb-0">{{ review.comment|linebreaksbr }}</p>
+                            {% else %}
+                                <p class="mb-0 text-muted fst-italic">コメントなし</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-star fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">まだレビューがありません。</p>
+                            <p class="text-muted">最初のレビューを投稿してみませんか？</p>
+                        </div>
+                    {% endif %}
+                {% elif user.is_authenticated %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-crown"></i> プレミアム会員限定機能</h6>
+                        <p class="mb-2">レビューの閲覧・投稿はプレミアム会員様の限定機能です。</p>
+                        <a href="{% url 'accounts:premium_upgrade' %}" class="btn btn-warning">
+                            <i class="fas fa-crown"></i> プレミアム会員になる
+                        </a>
                     </div>
                 {% else %}
                     <div class="alert alert-info">
-                        <p>レビューを見るには<a href="{% url 'accounts:login' %}">ログイン</a>が必要です。</p>
+                        <p class="mb-2">レビューを見るには会員登録とプレミアム会員へのアップグレードが必要です。</p>
+                        <a href="{% url 'accounts:signup' %}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> 会員登録
+                        </a>
                     </div>
                 {% endif %}
             </div>
@@ -92,7 +141,7 @@
             </div>
             <div class="card-body">
                 <p>この店舗を予約できます。</p>
-                <a href="#" class="btn btn-success btn-block">予約する</a>
+                <a href="{% url 'reservations:create' restaurant.id %}" class="btn btn-success btn-block">予約する</a>
             </div>
         </div>
         
@@ -101,7 +150,21 @@
                 <h5>お気に入り</h5>
             </div>
             <div class="card-body">
-                <button class="btn btn-outline-danger btn-block">♡ お気に入り追加</button>
+                {% if user_favorite %}
+                    <form method="post" action="{% url 'restaurants:remove_favorite' restaurant.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-block" id="favorite-btn">
+                            <i class="fas fa-heart"></i> お気に入り済み
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'restaurants:add_favorite' restaurant.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger btn-block" id="favorite-btn">
+                            <i class="far fa-heart"></i> お気に入りに追加
+                        </button>
+                    </form>
+                {% endif %}
             </div>
         </div>
         {% else %}

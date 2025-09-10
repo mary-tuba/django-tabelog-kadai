@@ -17,6 +17,7 @@ from reservations.models import Reservation
 from categories.models import Category
 from .models import CompanyInfo
 from .forms import CompanyInfoForm, AdminRestaurantCreateForm
+from reviews.forms import AdminReviewCreateForm
 
 User = get_user_model()
 
@@ -354,15 +355,258 @@ def user_delete(request, user_id):
 
 @staff_member_required
 def review_list(request):
-    return HttpResponse('<h1>レビュー管理</h1><p>工事中です</p>')
+    """レビュー管理 - レビュー一覧"""
+    # 検索・フィルタリング機能
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    rating_filter = request.GET.get('rating', 'all')
+    
+    # ベースクエリ
+    reviews = Review.objects.select_related('user', 'restaurant', 'restaurant__category').order_by('-created_at')
+    
+    # 検索機能
+    if search_query:
+        reviews = reviews.filter(
+            models.Q(comment__icontains=search_query) |
+            models.Q(restaurant__name__icontains=search_query) |
+            models.Q(user__username__icontains=search_query)
+        )
+    
+    # ステータスフィルター
+    if status_filter == 'public':
+        reviews = reviews.filter(is_public=True)
+    elif status_filter == 'hidden':
+        reviews = reviews.filter(is_public=False)
+    
+    # 評価フィルター
+    if rating_filter != 'all':
+        reviews = reviews.filter(rating=int(rating_filter))
+    
+    # ページネーション
+    from django.core.paginator import Paginator
+    paginator = Paginator(reviews, 20)  # 1ページに20件表示
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 統計情報
+    total_reviews = Review.objects.count()
+    public_reviews = Review.objects.filter(is_public=True).count()
+    hidden_reviews = Review.objects.filter(is_public=False).count()
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'rating_filter': rating_filter,
+        'total_reviews': total_reviews,
+        'public_reviews': public_reviews,
+        'hidden_reviews': hidden_reviews,
+    }
+    
+    return render(request, 'admin_panel/review_list.html', context)
+
 
 @staff_member_required
 def review_hide(request, review_id):
-    return HttpResponse(f'<h1>レビュー非公開</h1><p>レビューID: {review_id}</p><p>工事中です</p>')
+    """レビュー非公開"""
+    review = get_object_or_404(Review, id=review_id)
+    
+    if request.method == 'POST':
+        review.is_public = False
+        review.save()
+        messages.success(request, f'レビュー（ID: {review.id}）を非公開にしました。')
+    
+    return redirect('admin_panel:review_list')
+
+
+@staff_member_required
+def review_show(request, review_id):
+    """レビュー公開"""
+    review = get_object_or_404(Review, id=review_id)
+    
+    if request.method == 'POST':
+        review.is_public = True
+        review.save()
+        messages.success(request, f'レビュー（ID: {review.id}）を公開しました。')
+    
+    return redirect('admin_panel:review_list')
+
 
 @staff_member_required
 def review_delete(request, review_id):
-    return HttpResponse(f'<h1>レビュー削除</h1><p>レビューID: {review_id}</p><p>工事中です</p>')
+    """レビュー削除"""
+    review = get_object_or_404(Review, id=review_id)
+    
+    if request.method == 'POST':
+        restaurant_name = review.restaurant.name
+        user_name = review.user.username
+        review.delete()
+        messages.success(request, f'「{restaurant_name}」への「{user_name}」さんのレビューを削除しました。')
+        return redirect('admin_panel:review_list')
+    
+    context = {
+        'review': review
+    }
+    
+    return render(request, 'admin_panel/review_delete.html', context)
+
+
+@staff_member_required
+def review_create(request):
+    """管理者用レビュー作成"""
+    if request.method == 'POST':
+        form = AdminReviewCreateForm(request.POST)
+        if form.is_valid():
+            review = form.save()
+            messages.success(request, f'「{review.restaurant.name}」への「{review.user.username}」さんのレビューを作成しました。')
+            return redirect('admin_panel:review_list')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_label = form.fields[field].label if field != "__all__" else ""
+                    messages.error(request, f'{field_label}: {error}')
+    else:
+        form = AdminReviewCreateForm()
+    
+    context = {
+        'form': form,
+    }
+    return render(request, 'admin_panel/review_create.html', context)
+
+
+@staff_member_required
+def review_edit(request, review_id):
+    """管理者用レビュー編集"""
+    review = get_object_or_404(Review, id=review_id)
+    
+    if request.method == 'POST':
+        form = AdminReviewCreateForm(request.POST, instance=review)
+        if form.is_valid():
+            review = form.save()
+            messages.success(request, f'「{review.restaurant.name}」への「{review.user.username}」さんのレビューを更新しました。')
+            return redirect('admin_panel:review_list')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_label = form.fields[field].label if field != "__all__" else ""
+                    messages.error(request, f'{field_label}: {error}')
+    else:
+        form = AdminReviewCreateForm(instance=review)
+    
+    context = {
+        'form': form,
+        'review': review,
+    }
+    return render(request, 'admin_panel/review_edit.html', context)
+
+
+@staff_member_required
+def reservation_list(request):
+    """予約管理 - 予約一覧"""
+    from reservations.models import Reservation
+    from django.core.paginator import Paginator
+    
+    # 検索・フィルタリング機能
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    
+    # ベースクエリ
+    reservations = Reservation.objects.select_related('user', 'restaurant', 'restaurant__category').order_by('-reservation_date', '-reservation_time')
+    
+    # 検索機能
+    if search_query:
+        reservations = reservations.filter(
+            models.Q(restaurant__name__icontains=search_query) |
+            models.Q(user__username__icontains=search_query) |
+            models.Q(contact_phone__icontains=search_query)
+        )
+    
+    # ステータスフィルター
+    if status_filter != 'all':
+        reservations = reservations.filter(status=status_filter)
+    
+    # 統計データ
+    total_reservations = Reservation.objects.count()
+    pending_reservations = Reservation.objects.filter(status='pending').count()
+    confirmed_reservations = Reservation.objects.filter(status='confirmed').count()
+    cancelled_reservations = Reservation.objects.filter(status='cancelled').count()
+    
+    # ページネーション
+    paginator = Paginator(reservations, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'total_reservations': total_reservations,
+        'pending_reservations': pending_reservations,
+        'confirmed_reservations': confirmed_reservations,
+        'cancelled_reservations': cancelled_reservations,
+    }
+    
+    return render(request, 'admin_panel/reservation_list.html', context)
+
+
+@staff_member_required
+def reservation_detail(request, reservation_id):
+    """予約詳細"""
+    from reservations.models import Reservation
+    
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    
+    context = {
+        'reservation': reservation,
+    }
+    
+    return render(request, 'admin_panel/reservation_detail.html', context)
+
+
+@staff_member_required
+def reservation_status_change(request, reservation_id):
+    """予約ステータス変更"""
+    from reservations.models import Reservation
+    
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        if new_status in ['pending', 'confirmed', 'cancelled', 'completed']:
+            old_status = reservation.get_status_display()
+            reservation.status = new_status
+            reservation.save()
+            new_status_display = reservation.get_status_display()
+            messages.success(request, f'「{reservation.restaurant.name}」の予約ステータスを「{old_status}」→「{new_status_display}」に変更しました。')
+        else:
+            messages.error(request, '無効なステータスです。')
+        
+        return redirect('admin_panel:reservation_detail', reservation_id=reservation_id)
+    
+    return redirect('admin_panel:reservation_detail', reservation_id=reservation_id)
+
+
+@staff_member_required
+def reservation_delete(request, reservation_id):
+    """予約削除"""
+    from reservations.models import Reservation
+    
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+    
+    if request.method == 'POST':
+        restaurant_name = reservation.restaurant.name
+        user_name = reservation.user.username
+        reservation_date = reservation.reservation_date
+        reservation.delete()
+        messages.success(request, f'「{restaurant_name}」への「{user_name}」さんの{reservation_date}の予約を削除しました。')
+        return redirect('admin_panel:reservation_list')
+    
+    context = {
+        'reservation': reservation
+    }
+    
+    return render(request, 'admin_panel/reservation_delete.html', context)
+
 
 @staff_member_required
 def sales_report(request):

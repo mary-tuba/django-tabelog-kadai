@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}マイ予約一覧 | {% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-calendar-alt"></i> マイ予約一覧</h1>
+    </div>
+
+    {% if page_obj %}
+        <div class="row">
+            {% for reservation in page_obj %}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title mb-1">{{ reservation.restaurant.name }}</h5>
+                                {% if reservation.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock"></i> 予約中
+                                    </span>
+                                {% elif reservation.status == 'confirmed' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> 確定
+                                    </span>
+                                {% elif reservation.status == 'cancelled' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times"></i> キャンセル
+                                    </span>
+                                {% elif reservation.status == 'completed' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-flag-checkered"></i> 完了
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-tag"></i> {{ reservation.restaurant.category.name }}
+                            </p>
+                            
+                            <div class="mb-2">
+                                <p class="mb-1">
+                                    <i class="fas fa-calendar"></i> 
+                                    <strong>{{ reservation.reservation_date|date:"Y年m月d日" }}</strong>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-clock"></i> 
+                                    <strong>{{ reservation.reservation_time|time:"H:i" }}</strong>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-users"></i> 
+                                    <strong>{{ reservation.party_size }}名</strong>
+                                </p>
+                            </div>
+                            
+                            {% if reservation.notes %}
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-comment"></i> {{ reservation.notes|truncatechars:50 }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="text-end">
+                                <a href="{% url 'reservations:detail' reservation.id %}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i> 詳細
+                                </a>
+                                
+                                {% if reservation.can_cancel and reservation.status != 'cancelled' %}
+                                    <a href="{% url 'reservations:cancel' reservation.id %}" 
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-times"></i> キャンセル
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer text-muted">
+                            <small>
+                                <i class="fas fa-clock"></i> 
+                                予約日時: {{ reservation.created_at|date:"Y/m/d H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- ページネーション -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="ページネーション" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">前へ</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">次へ</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+            <h3 class="text-muted mb-3">予約がありません</h3>
+            <p class="text-muted mb-4">まだ予約をされていません。<br>お気に入りのレストランを予約してみましょう。</p>
+            <a href="{% url 'restaurants:index' %}" class="btn btn-primary">
+                <i class="fas fa-search"></i> レストランを探す
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

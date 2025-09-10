@@ -1,0 +1,192 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}予約詳細 - {{ reservation.restaurant.name }} | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'admin_panel:reservation_list' %}">予約管理</a>
+</li>
+<li class="breadcrumb-item active">予約詳細</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- 予約詳細 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> 予約詳細</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>予約ID：</strong></div>
+                    <div class="col-sm-9">{{ reservation.id }}</div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>ユーザー：</strong></div>
+                    <div class="col-sm-9">
+                        <a href="{% url 'admin_panel:user_detail' reservation.user.id %}">
+                            {{ reservation.user.username }}
+                        </a>
+                        {% if reservation.user.is_premium %}
+                            <span class="badge bg-warning text-dark">プレミアム</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>店舗：</strong></div>
+                    <div class="col-sm-9">
+                        <a href="{% url 'restaurants:detail' reservation.restaurant.id %}" target="_blank">
+                            {{ reservation.restaurant.name }}
+                        </a>
+                        <br><small class="text-muted">{{ reservation.restaurant.category.name }}</small>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>予約日：</strong></div>
+                    <div class="col-sm-9">{{ reservation.reservation_date|date:"Y年m月d日（l）" }}</div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>予約時間：</strong></div>
+                    <div class="col-sm-9">{{ reservation.reservation_time|time:"H:i" }}</div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>人数：</strong></div>
+                    <div class="col-sm-9">{{ reservation.party_size }}名</div>
+                </div>
+                
+                {% if reservation.contact_phone %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>連絡先：</strong></div>
+                        <div class="col-sm-9">{{ reservation.contact_phone }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if reservation.notes %}
+                    <div class="row mb-3">
+                        <div class="col-sm-3"><strong>特記事項：</strong></div>
+                        <div class="col-sm-9">{{ reservation.notes|linebreaks }}</div>
+                    </div>
+                {% endif %}
+                
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>予約作成日：</strong></div>
+                    <div class="col-sm-9">{{ reservation.created_at|date:"Y年m月d日 H:i" }}</div>
+                </div>
+                
+                <div class="row mb-0">
+                    <div class="col-sm-3"><strong>最終更新：</strong></div>
+                    <div class="col-sm-9">{{ reservation.updated_at|date:"Y年m月d日 H:i" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 店舗情報 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-store"></i> 店舗情報</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>店舗名：</strong></div>
+                    <div class="col-sm-9">{{ reservation.restaurant.name }}</div>
+                </div>
+                
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>住所：</strong></div>
+                    <div class="col-sm-9">{{ reservation.restaurant.address }}</div>
+                </div>
+                
+                <div class="row mb-2">
+                    <div class="col-sm-3"><strong>電話番号：</strong></div>
+                    <div class="col-sm-9">{{ reservation.restaurant.phone_number }}</div>
+                </div>
+                
+                <div class="row mb-0">
+                    <div class="col-sm-3"><strong>予算：</strong></div>
+                    <div class="col-sm-9">
+                        ¥{{ reservation.restaurant.budget_min|default:0 }}～¥{{ reservation.restaurant.budget_max|default:5000 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- ステータス管理 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tasks"></i> ステータス管理</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if reservation.status == 'pending' %}
+                        <i class="fas fa-clock fa-3x text-warning mb-2"></i>
+                        <h5 class="text-warning">予約受付中</h5>
+                    {% elif reservation.status == 'confirmed' %}
+                        <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                        <h5 class="text-success">予約確定</h5>
+                    {% elif reservation.status == 'cancelled' %}
+                        <i class="fas fa-times-circle fa-3x text-danger mb-2"></i>
+                        <h5 class="text-danger">キャンセル済み</h5>
+                    {% elif reservation.status == 'completed' %}
+                        <i class="fas fa-flag-checkered fa-3x text-secondary mb-2"></i>
+                        <h5 class="text-secondary">利用完了</h5>
+                    {% endif %}
+                </div>
+                
+                <form method="post" action="{% url 'admin_panel:reservation_status_change' reservation.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">ステータス変更</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="pending" {% if reservation.status == 'pending' %}selected{% endif %}>予約中</option>
+                            <option value="confirmed" {% if reservation.status == 'confirmed' %}selected{% endif %}>確定済み</option>
+                            <option value="cancelled" {% if reservation.status == 'cancelled' %}selected{% endif %}>キャンセル</option>
+                            <option value="completed" {% if reservation.status == 'completed' %}selected{% endif %}>利用完了</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save"></i> ステータス更新
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- アクション -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> アクション</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'admin_panel:reservation_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 予約一覧に戻る
+                    </a>
+                    
+                    <a href="{% url 'admin_panel:user_detail' reservation.user.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-user"></i> ユーザー詳細
+                    </a>
+                    
+                    <a href="{% url 'restaurants:detail' reservation.restaurant.id %}" target="_blank" class="btn btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> 店舗詳細
+                    </a>
+                    
+                    <hr>
+                    
+                    <a href="{% url 'admin_panel:reservation_delete' reservation.id %}" 
+                       class="btn btn-outline-danger">
+                        <i class="fas fa-trash"></i> 予約削除
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

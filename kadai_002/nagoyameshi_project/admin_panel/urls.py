@@ -26,8 +26,17 @@ urlpatterns = [
     
     # レビュー管理
     path('reviews/', views.review_list, name='review_list'),
+    path('reviews/create/', views.review_create, name='review_create'),
+    path('reviews/<int:review_id>/edit/', views.review_edit, name='review_edit'),
     path('reviews/<int:review_id>/hide/', views.review_hide, name='review_hide'),
+    path('reviews/<int:review_id>/show/', views.review_show, name='review_show'),
     path('reviews/<int:review_id>/delete/', views.review_delete, name='review_delete'),
+    
+    # 予約管理
+    path('reservations/', views.reservation_list, name='reservation_list'),
+    path('reservations/<int:reservation_id>/', views.reservation_detail, name='reservation_detail'),
+    path('reservations/<int:reservation_id>/status-change/', views.reservation_status_change, name='reservation_status_change'),
+    path('reservations/<int:reservation_id>/delete/', views.reservation_delete, name='reservation_delete'),
     
     # 売上管理
     path('sales/', views.sales_report, name='sales_report'),

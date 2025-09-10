@@ -61,8 +61,13 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="#">
-                                        <i class="fas fa-calendar-alt text-info"></i> 予約機能
+                                    <a class="dropdown-item" href="{% url 'reservations:list' %}">
+                                        <i class="fas fa-calendar-alt text-info"></i> マイ予約
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'restaurants:favorite_list' %}">
+                                        <i class="fas fa-heart text-danger"></i> お気に入り
                                     </a>
                                 </li>
                             </ul>

@@ -1,0 +1,235 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}予約管理 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">予約管理</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-calendar-alt"></i> 予約管理</h1>
+</div>
+
+<!-- 統計カード -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">総予約数</h6>
+                        <h4 class="mb-0">{{ total_reservations }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">予約中</h6>
+                        <h4 class="mb-0">{{ pending_reservations }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">確定済み</h6>
+                        <h4 class="mb-0">{{ confirmed_reservations }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">キャンセル</h6>
+                        <h4 class="mb-0">{{ cancelled_reservations }}件</h4>
+                    </div>
+                    <div>
+                        <i class="fas fa-times fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 検索・フィルター -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label for="search" class="form-label">キーワード検索</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search_query }}" placeholder="店舗名、ユーザー名、電話番号で検索">
+            </div>
+            
+            <div class="col-md-4">
+                <label for="status" class="form-label">予約ステータス</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="all" {% if status_filter == 'all' %}selected{% endif %}>すべて</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>予約中</option>
+                    <option value="confirmed" {% if status_filter == 'confirmed' %}selected{% endif %}>確定済み</option>
+                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>キャンセル</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>利用完了</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> 検索
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 予約一覧 -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">予約一覧 ({{ page_obj.paginator.count }}件)</h5>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ユーザー</th>
+                            <th>店舗</th>
+                            <th>予約日時</th>
+                            <th>人数</th>
+                            <th>ステータス</th>
+                            <th>連絡先</th>
+                            <th>予約日</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in page_obj %}
+                        <tr>
+                            <td>{{ reservation.id }}</td>
+                            <td>
+                                <strong>{{ reservation.user.username }}</strong>
+                                {% if reservation.user.is_premium %}
+                                    <span class="badge bg-warning text-dark">プレミアム</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'restaurants:detail' reservation.restaurant.id %}" target="_blank">
+                                    {{ reservation.restaurant.name }}
+                                </a>
+                                <br><small class="text-muted">{{ reservation.restaurant.category.name }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ reservation.reservation_date|date:"m/d" }}</strong><br>
+                                <small>{{ reservation.reservation_time|time:"H:i" }}</small>
+                            </td>
+                            <td>{{ reservation.party_size }}名</td>
+                            <td>
+                                {% if reservation.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock"></i> 予約中
+                                    </span>
+                                {% elif reservation.status == 'confirmed' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> 確定
+                                    </span>
+                                {% elif reservation.status == 'cancelled' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times"></i> キャンセル
+                                    </span>
+                                {% elif reservation.status == 'completed' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-flag-checkered"></i> 完了
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if reservation.contact_phone %}
+                                    {{ reservation.contact_phone }}
+                                {% else %}
+                                    <span class="text-muted">なし</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ reservation.created_at|date:"m/d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'admin_panel:reservation_detail' reservation.id %}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i> 詳細
+                                </a>
+                                <a href="{% url 'admin_panel:reservation_delete' reservation.id %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i> 削除
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- ページネーション -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="ページネーション" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">前へ</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter != 'all' %}status={{ status_filter }}&{% endif %}page={{ page_obj.next_page_number }}">次へ</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <p class="text-muted">予約が見つかりませんでした。</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

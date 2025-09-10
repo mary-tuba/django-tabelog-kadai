@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}予約キャンセル確認 - {{ reservation.restaurant.name }} | {% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> 予約キャンセル確認</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>注意：</strong> 一度キャンセルした予約は元に戻すことができません。本当にキャンセルしますか？
+                    </div>
+                    
+                    <!-- 予約情報表示 -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">キャンセル対象予約</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-sm-3"><strong>店舗名：</strong></div>
+                                <div class="col-sm-9">{{ reservation.restaurant.name }}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-sm-3"><strong>予約日：</strong></div>
+                                <div class="col-sm-9">{{ reservation.reservation_date|date:"Y年m月d日（l）" }}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-sm-3"><strong>予約時間：</strong></div>
+                                <div class="col-sm-9">{{ reservation.reservation_time|time:"H:i" }}</div>
+                            </div>
+                            
+                            <div class="row mb-2">
+                                <div class="col-sm-3"><strong>人数：</strong></div>
+                                <div class="col-sm-9">{{ reservation.party_size }}名</div>
+                            </div>
+                            
+                            {% if reservation.notes %}
+                                <div class="row mb-2">
+                                    <div class="col-sm-3"><strong>特記事項：</strong></div>
+                                    <div class="col-sm-9">{{ reservation.notes|truncatechars:100 }}</div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row mb-0">
+                                <div class="col-sm-3"><strong>予約番号：</strong></div>
+                                <div class="col-sm-9">{{ reservation.id }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 店舗連絡先情報 -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>店舗へのご連絡について</strong><br>
+                        直前のキャンセルの場合は、お店にも直接ご連絡いただくことをお勧めします。<br>
+                        <strong>{{ reservation.restaurant.name }}</strong><br>
+                        電話：{{ reservation.restaurant.phone_number }}
+                    </div>
+                    
+                    <!-- キャンセルフォーム -->
+                    <div class="text-end mt-4">
+                        <a href="{% url 'reservations:detail' reservation.id %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> 戻る
+                        </a>
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm('本当にキャンセルしますか？この操作は元に戻せません。')">
+                                <i class="fas fa-times"></i> キャンセルする
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

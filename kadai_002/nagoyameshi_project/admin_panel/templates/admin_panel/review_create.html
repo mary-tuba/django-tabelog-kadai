@@ -1,0 +1,134 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}レビュー追加 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'admin_panel:review_list' %}">レビュー管理</a>
+</li>
+<li class="breadcrumb-item active">レビュー追加</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus"></i> レビュー追加</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.user.id_for_label }}" class="form-label">
+                            {{ form.user.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.user }}
+                        {% if form.user.help_text %}
+                            <div class="form-text">{{ form.user.help_text }}</div>
+                        {% endif %}
+                        {% if form.user.errors %}
+                            <div class="text-danger">
+                                {% for error in form.user.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.restaurant.id_for_label }}" class="form-label">
+                            {{ form.restaurant.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.restaurant }}
+                        {% if form.restaurant.help_text %}
+                            <div class="form-text">{{ form.restaurant.help_text }}</div>
+                        {% endif %}
+                        {% if form.restaurant.errors %}
+                            <div class="text-danger">
+                                {% for error in form.restaurant.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.rating.id_for_label }}" class="form-label">
+                            {{ form.rating.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.rating }}
+                        {% if form.rating.help_text %}
+                            <div class="form-text">{{ form.rating.help_text }}</div>
+                        {% endif %}
+                        {% if form.rating.errors %}
+                            <div class="text-danger">
+                                {% for error in form.rating.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.comment.id_for_label }}" class="form-label">
+                            {{ form.comment.label }}
+                        </label>
+                        {{ form.comment }}
+                        {% if form.comment.help_text %}
+                            <div class="form-text">{{ form.comment.help_text }}</div>
+                        {% endif %}
+                        {% if form.comment.errors %}
+                            <div class="text-danger">
+                                {% for error in form.comment.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.is_public }}
+                            <label for="{{ form.is_public.id_for_label }}" class="form-check-label">
+                                {{ form.is_public.label }}
+                            </label>
+                        </div>
+                        {% if form.is_public.help_text %}
+                            <div class="form-text">{{ form.is_public.help_text }}</div>
+                        {% endif %}
+                        {% if form.is_public.errors %}
+                            <div class="text-danger">
+                                {% for error in form.is_public.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="text-end">
+                        <a href="{% url 'admin_panel:review_list' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> 戻る
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

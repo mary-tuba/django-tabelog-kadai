@@ -91,6 +91,10 @@
                            href="{% url 'admin_panel:review_list' %}">
                             <i class="fas fa-star me-2"></i> レビュー管理
                         </a>
+                        <a class="nav-link {% if 'reservation' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'admin_panel:reservation_list' %}">
+                            <i class="fas fa-calendar-alt me-2"></i> 予約管理
+                        </a>
                         <a class="nav-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}" 
                            href="{% url 'admin_panel:sales_report' %}">
                             <i class="fas fa-chart-line me-2"></i> 売上管理

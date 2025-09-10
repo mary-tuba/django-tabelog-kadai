@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}予約 - {{ restaurant.name }} | {% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- 店舗情報カード -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-start">
+                        {% if restaurant.image %}
+                            <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" 
+                                 class="rounded me-3" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h4 class="card-title mb-1">{{ restaurant.name }}</h4>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-tag"></i> {{ restaurant.category.name }}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-map-marker-alt"></i> {{ restaurant.address }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-yen-sign"></i> 
+                                ¥{{ restaurant.budget_min|default:0 }}～¥{{ restaurant.budget_max|default:5000 }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 予約フォーム -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-plus"></i> ご予約</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>ご予約について</strong><br>
+                        ・営業時間：11:00〜22:00<br>
+                        ・予約は1時間後以降の時間から可能です<br>
+                        ・予約確定後、お店からご連絡いたします<br>
+                        ・キャンセルは予約日の前日まで可能です
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.reservation_date.id_for_label }}" class="form-label">
+                                {{ form.reservation_date.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.reservation_date }}
+                            {% if form.reservation_date.help_text %}
+                                <div class="form-text">{{ form.reservation_date.help_text }}</div>
+                            {% endif %}
+                            {% if form.reservation_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.reservation_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.reservation_time.id_for_label }}" class="form-label">
+                                {{ form.reservation_time.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.reservation_time }}
+                            {% if form.reservation_time.help_text %}
+                                <div class="form-text">{{ form.reservation_time.help_text }}</div>
+                            {% endif %}
+                            {% if form.reservation_time.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.reservation_time.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.party_size.id_for_label }}" class="form-label">
+                                {{ form.party_size.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.party_size }}
+                            {% if form.party_size.help_text %}
+                                <div class="form-text">{{ form.party_size.help_text }}</div>
+                            {% endif %}
+                            {% if form.party_size.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.party_size.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.contact_phone.id_for_label }}" class="form-label">
+                                {{ form.contact_phone.label }}
+                            </label>
+                            {{ form.contact_phone }}
+                            {% if form.contact_phone.help_text %}
+                                <div class="form-text">{{ form.contact_phone.help_text }}</div>
+                            {% endif %}
+                            {% if form.contact_phone.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.contact_phone.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.help_text %}
+                                <div class="form-text">{{ form.notes.help_text }}</div>
+                            {% endif %}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.notes.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="text-end">
+                            <a href="{% url 'restaurants:detail' restaurant.id %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-arrow-left"></i> 店舗詳細に戻る
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-check"></i> 予約する
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

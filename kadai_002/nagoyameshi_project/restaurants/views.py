@@ -1,9 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db import IntegrityError
 from accounts.decorators import premium_required
 from .forms import RestaurantCreateForm
-from .models import Restaurant
+from .models import Restaurant, Favorite
+from reviews.models import Review
 
 
 def index(request):
@@ -26,8 +29,32 @@ def detail(request, restaurant_id):
         id=restaurant_id
     )
     
+    # プレミアムユーザーのみレビューを表示
+    reviews = None
+    user_review = None
+    if request.user.is_authenticated and getattr(request.user, 'is_premium', False):
+        # 公開されているレビューを取得
+        reviews = Review.objects.filter(
+            restaurant=restaurant,
+            is_public=True
+        ).select_related('user').order_by('-created_at')
+        
+        # ログインユーザーのレビューがあるかチェック
+        user_review = Review.objects.filter(
+            restaurant=restaurant,
+            user=request.user
+        ).first()
+    
+    # お気に入り状態をチェック（プレミアムユーザーのみ）
+    user_favorite = False
+    if request.user.is_authenticated and getattr(request.user, 'is_premium', False):
+        user_favorite = Favorite.objects.filter(user=request.user, restaurant=restaurant).exists()
+    
     context = {
         'restaurant': restaurant,
+        'reviews': reviews,
+        'user_review': user_review,
+        'user_favorite': user_favorite,
     }
     return render(request, 'restaurants/detail.html', context)
 
@@ -75,3 +102,85 @@ def my_restaurants(request):
         'page_title': '登録した店舗一覧'
     }
     return render(request, 'restaurants/my_restaurants.html', context)
+
+
+@premium_required()
+def add_favorite(request, restaurant_id):
+    """お気に入りに追加"""
+    if request.method == 'POST':
+        restaurant = get_object_or_404(Restaurant, id=restaurant_id, is_active=True)
+        
+        try:
+            favorite, created = Favorite.objects.get_or_create(
+                user=request.user,
+                restaurant=restaurant
+            )
+            
+            if created:
+                messages.success(request, f'「{restaurant.name}」をお気に入りに追加しました。')
+                is_favorite = True
+            else:
+                messages.info(request, f'「{restaurant.name}」は既にお気に入りに登録済みです。')
+                is_favorite = True
+                
+        except IntegrityError:
+            messages.error(request, 'お気に入りの追加に失敗しました。')
+            is_favorite = False
+        
+        # AJAX リクエストの場合は JSON で返す
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': created,
+                'is_favorite': is_favorite,
+                'message': messages.get_messages(request)._loaded_data[-1].message if messages.get_messages(request)._loaded_data else ''
+            })
+        
+        return redirect('restaurants:detail', restaurant_id=restaurant_id)
+    
+    return redirect('restaurants:detail', restaurant_id=restaurant_id)
+
+
+@premium_required()
+def remove_favorite(request, restaurant_id):
+    """お気に入りから削除"""
+    if request.method == 'POST':
+        restaurant = get_object_or_404(Restaurant, id=restaurant_id)
+        
+        try:
+            favorite = Favorite.objects.get(user=request.user, restaurant=restaurant)
+            favorite.delete()
+            messages.success(request, f'「{restaurant.name}」をお気に入りから削除しました。')
+            is_favorite = False
+            success = True
+        except Favorite.DoesNotExist:
+            messages.info(request, f'「{restaurant.name}」はお気に入りに登録されていません。')
+            is_favorite = False
+            success = False
+        
+        # AJAX リクエストの場合は JSON で返す
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': success,
+                'is_favorite': is_favorite,
+                'message': messages.get_messages(request)._loaded_data[-1].message if messages.get_messages(request)._loaded_data else ''
+            })
+        
+        return redirect('restaurants:detail', restaurant_id=restaurant_id)
+    
+    return redirect('restaurants:detail', restaurant_id=restaurant_id)
+
+
+@premium_required()
+def favorite_list(request):
+    """お気に入り一覧"""
+    favorites = Favorite.objects.filter(user=request.user).select_related('restaurant', 'restaurant__category').order_by('-created_at')
+    
+    # ページネーション
+    paginator = Paginator(favorites, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+    }
+    return render(request, 'restaurants/favorite_list.html', context)
