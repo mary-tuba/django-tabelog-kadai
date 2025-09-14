@@ -170,11 +170,21 @@ class AdminRestaurantCreateForm(forms.ModelForm):
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         help_text='チェックを入れると即座に承認済み状態で公開されます'
     )
+    
+    image = forms.ImageField(
+        label='店舗画像',
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        help_text='推奨サイズ: 800x600px、最大5MB'
+    )
 
     class Meta:
         model = Restaurant
         fields = [
-            'name', 'description', 'category', 'postal_code', 'address', 
+            'name', 'description', 'category', 'image', 'postal_code', 'address', 
             'phone_number', 'opening_hours', 'closed_days', 
             'budget_min', 'budget_max', 'is_active'
         ]

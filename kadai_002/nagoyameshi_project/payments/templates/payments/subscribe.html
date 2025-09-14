@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}プレミアム会員登録 | {% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-crown"></i> プレミアム会員登録</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5 class="text-warning mb-3">
+                                <i class="fas fa-star"></i> プレミアム会員特典
+                            </h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i> 
+                                    <strong>店舗予約機能</strong> - お気に入りの店舗を予約
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i> 
+                                    <strong>レビュー投稿</strong> - 訪問した店舗の評価・感想を共有
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i> 
+                                    <strong>お気に入り登録</strong> - 気になる店舗をリスト化
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-check text-success"></i> 
+                                    <strong>店舗登録</strong> - 新しい店舗情報を追加
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h3 class="text-primary mb-1">月額料金</h3>
+                                    <div class="display-4 text-dark">
+                                        <small>¥</small>{{ price }}
+                                    </div>
+                                    <p class="text-muted mb-0">税込み / 月</p>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <small>
+                                    <i class="fas fa-info-circle"></i>
+                                    いつでも解約可能です。解約しても期間終了まではご利用いただけます。
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-4">
+                        <h5 class="mb-3">お支払い情報</h5>
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-lock"></i> 
+                            お支払いは安全なStripeチェックアウトで処理されます。
+                            カード情報は当サイトには保存されません。
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>お支払い方法：</strong></p>
+                                <ul class="list-unstyled">
+                                    <li><i class="fab fa-cc-visa fa-2x me-2"></i> Visa</li>
+                                    <li><i class="fab fa-cc-mastercard fa-2x me-2"></i> Mastercard</li>
+                                    <li><i class="fab fa-cc-amex fa-2x me-2"></i> American Express</li>
+                                    <li><i class="fab fa-cc-jcb fa-2x me-2"></i> JCB</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>請求サイクル：</strong></p>
+                                <p>毎月自動更新</p>
+                                
+                                <p><strong>初回請求：</strong></p>
+                                <p>登録後すぐに請求されます</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning btn-lg px-5">
+                                <i class="fas fa-credit-card"></i> 
+                                決済画面へ進む
+                            </button>
+                        </form>
+                        
+                        <p class="mt-3">
+                            <a href="{% url 'accounts:profile' %}" class="text-muted">
+                                <i class="fas fa-arrow-left"></i> マイページに戻る
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

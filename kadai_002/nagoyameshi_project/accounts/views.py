@@ -113,19 +113,15 @@ def password_change_view(request):
 @login_required
 def premium_upgrade_view(request):
     """プレミアム会員アップグレードページ"""
-    if request.method == 'POST':
-        messages.info(request, 'プレミアム会員機能は実装中です。')
-    
-    return render(request, 'accounts/premium_upgrade.html')
+    # Stripe決済ページにリダイレクト
+    return redirect('payments:subscribe')
 
 
 @login_required
 def premium_cancel_view(request):
     """プレミアム会員解約ページ"""
-    if request.method == 'POST':
-        messages.info(request, 'プレミアム会員解約機能は実装中です。')
-    
-    return render(request, 'accounts/premium_cancel.html')
+    # Stripe解約ページにリダイレクト
+    return redirect('payments:cancel_subscription')
 
 
 @login_required

@@ -60,10 +60,69 @@ def detail(request, restaurant_id):
 
 
 def search(request):
-    """店舗検索ページ"""
+    """店舗検索ページ（ログイン不要）"""
+    from categories.models import Category
+    from django.db.models import Q
+    
+    # 検索パラメータを取得
+    keyword = request.GET.get('keyword', '').strip()
+    category_id = request.GET.get('category', '')
+    budget_min = request.GET.get('budget_min', '')
+    budget_max = request.GET.get('budget_max', '')
+    sort_by = request.GET.get('sort', 'created_at')
+    
+    # 基本のクエリセット（承認済みの店舗のみ）
+    restaurants = Restaurant.objects.filter(is_active=True).select_related('category')
+    
+    # キーワード検索（店舗名、説明、住所）
+    if keyword:
+        restaurants = restaurants.filter(
+            Q(name__icontains=keyword) |
+            Q(description__icontains=keyword) |
+            Q(address__icontains=keyword)
+        )
+    
+    # カテゴリ検索
+    if category_id:
+        restaurants = restaurants.filter(category_id=category_id)
+    
+    # 予算検索
+    try:
+        if budget_min:
+            restaurants = restaurants.filter(budget_max__gte=int(budget_min))
+        if budget_max:
+            restaurants = restaurants.filter(budget_min__lte=int(budget_max))
+    except ValueError:
+        pass
+    
+    # 並び替え
+    if sort_by == 'name':
+        restaurants = restaurants.order_by('name')
+    elif sort_by == 'budget_min':
+        restaurants = restaurants.order_by('budget_min')
+    elif sort_by == 'budget_max':
+        restaurants = restaurants.order_by('-budget_max')
+    else:  # created_at
+        restaurants = restaurants.order_by('-created_at')
+    
+    # ページネーション
+    paginator = Paginator(restaurants, 9)  # 1ページ9件
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # カテゴリ一覧を取得
+    categories = Category.objects.all().order_by('name')
+    
     context = {
         'page_title': '店舗検索',
-        'categories': ['台湾料理', '手羽先', '喫茶', 'ひつまぶし', '味噌カツ']
+        'categories': categories,
+        'page_obj': page_obj,
+        'keyword': keyword,
+        'selected_category': category_id,
+        'budget_min': budget_min,
+        'budget_max': budget_max,
+        'sort_by': sort_by,
+        'result_count': restaurants.count(),
     }
     return render(request, 'restaurants/search.html', context)
 
@@ -72,7 +131,7 @@ def search(request):
 def create_restaurant(request):
     """店舗登録ページ（プレミアム会員限定）"""
     if request.method == 'POST':
-        form = RestaurantCreateForm(request.POST)
+        form = RestaurantCreateForm(request.POST, request.FILES)
         if form.is_valid():
             restaurant = form.save()
             messages.success(

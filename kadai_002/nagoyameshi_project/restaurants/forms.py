@@ -111,11 +111,21 @@ class RestaurantCreateForm(forms.ModelForm):
             'placeholder': 'https://example.com'
         })
     )
+    
+    image = forms.ImageField(
+        label='店舗画像',
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        help_text='推奨サイズ: 800x600px、最大5MB'
+    )
 
     class Meta:
         model = Restaurant
         fields = [
-            'name', 'description', 'category', 'postal_code', 'address', 
+            'name', 'description', 'category', 'image', 'postal_code', 'address', 
             'phone_number', 'opening_hours', 'closed_days', 
             'budget_min', 'budget_max', 'website_url'
         ]

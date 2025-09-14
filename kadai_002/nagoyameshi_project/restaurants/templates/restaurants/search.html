@@ -1,103 +1,195 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}{{ page_title }} - NAGOYAMESHI{% endblock %}
+{% block title %}店舗検索 - NAGOYAMESHI{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h1>{{ page_title }}</h1>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5>検索条件</h5>
-            </div>
-            <div class="card-body">
-                <form method="GET">
-                    <div class="mb-3">
-                        <label for="keyword" class="form-label">店舗名</label>
-                        <input type="text" class="form-control" id="keyword" name="keyword" placeholder="店舗名を入力">
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="fas fa-search"></i> 店舗検索</h1>
+    
+    <!-- 検索フォーム -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'restaurants:search' %}">
+                <div class="row">
+                    <!-- キーワード検索 -->
+                    <div class="col-md-6 mb-3">
+                        <label for="keyword" class="form-label">キーワード</label>
+                        <input type="text" class="form-control" id="keyword" name="keyword" 
+                               value="{{ keyword }}" placeholder="店舗名、説明、住所で検索">
                     </div>
                     
-                    <div class="mb-3">
+                    <!-- カテゴリ検索 -->
+                    <div class="col-md-6 mb-3">
                         <label for="category" class="form-label">カテゴリ</label>
-                        <select class="form-control" id="category" name="category">
+                        <select class="form-select" id="category" name="category">
                             <option value="">すべてのカテゴリ</option>
                             {% for category in categories %}
-                                <option value="{{ category }}">{{ category }}</option>
+                                <option value="{{ category.id }}" 
+                                        {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
                             {% endfor %}
                         </select>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="budget" class="form-label">予算</label>
-                        <select class="form-control" id="budget" name="budget">
-                            <option value="">指定なし</option>
-                            <option value="1">～1,000円</option>
-                            <option value="2">1,000円～2,000円</option>
-                            <option value="3">2,000円～3,000円</option>
-                            <option value="4">3,000円～</option>
-                        </select>
+                    <!-- 予算検索 -->
+                    <div class="col-md-3 mb-3">
+                        <label for="budget_min" class="form-label">予算下限（円）</label>
+                        <input type="number" class="form-control" id="budget_min" name="budget_min" 
+                               value="{{ budget_min }}" placeholder="0" min="0" step="100">
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="sort" class="form-label">並び順</label>
-                        <select class="form-control" id="sort" name="sort">
-                            <option value="rating">評価順</option>
-                            <option value="created_at">登録順</option>
-                            <option value="name">名前順</option>
-                        </select>
+                    <div class="col-md-3 mb-3">
+                        <label for="budget_max" class="form-label">予算上限（円）</label>
+                        <input type="number" class="form-control" id="budget_max" name="budget_max" 
+                               value="{{ budget_max }}" placeholder="10000" min="0" step="100">
                     </div>
                     
-                    <button type="submit" class="btn btn-primary btn-block">検索</button>
-                </form>
-            </div>
+                    <!-- 並び替え -->
+                    <div class="col-md-6 mb-3">
+                        <label for="sort" class="form-label">並び替え</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>
+                                新着順
+                            </option>
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>
+                                店舗名順
+                            </option>
+                            <option value="budget_min" {% if sort_by == 'budget_min' %}selected{% endif %}>
+                                予算（安い順）
+                            </option>
+                            <option value="budget_max" {% if sort_by == 'budget_max' %}selected{% endif %}>
+                                予算（高い順）
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 検索ボタン -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'restaurants:search' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> リセット
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>検索結果</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info">
-                    <p class="mb-0">検索機能は実装中です。しばらくお待ちください。</p>
-                </div>
-                
-                <!-- ダミーの検索結果 -->
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title">味仙</h6>
-                                <p class="card-text">
-                                    <span class="badge bg-secondary">台湾料理</span>
-                                    <span class="text-warning">★★★★☆ 4.5</span>
-                                </p>
-                                <a href="{% url 'restaurants:detail' 1 %}" class="btn btn-sm btn-primary">詳細を見る</a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title">世界の山ちゃん</h6>
-                                <p class="card-text">
-                                    <span class="badge bg-secondary">手羽先</span>
-                                    <span class="text-warning">★★★★☆ 4.2</span>
-                                </p>
-                                <a href="{% url 'restaurants:detail' 2 %}" class="btn btn-sm btn-primary">詳細を見る</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- 検索結果 -->
+    <div class="mb-3">
+        <p class="text-muted">
+            {% if keyword or selected_category or budget_min or budget_max %}
+                検索結果: <strong>{{ result_count }}</strong> 件
+            {% else %}
+                全 <strong>{{ result_count }}</strong> 件の店舗
+            {% endif %}
+        </p>
     </div>
+    
+    <!-- 店舗一覧 -->
+    {% if page_obj %}
+        <div class="row">
+            {% for restaurant in page_obj %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if restaurant.image %}
+                            <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" 
+                                 class="card-img-top" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'images/no_image_yoko.jpg' %}" alt="No Image" 
+                                 class="card-img-top" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        
+                        <div class="card-body">
+                            <h5 class="card-title">{{ restaurant.name }}</h5>
+                            <p class="card-text">
+                                <span class="badge bg-secondary">{{ restaurant.category.name }}</span>
+                            </p>
+                            
+                            {% if restaurant.description %}
+                                <p class="card-text text-muted small">
+                                    {{ restaurant.description|truncatechars:80 }}
+                                </p>
+                            {% endif %}
+                            
+                            <p class="text-success">
+                                <i class="fas fa-yen-sign"></i> 
+                                {{ restaurant.budget_min|default:0 }}円〜{{ restaurant.budget_max|default:5000 }}円
+                            </p>
+                            
+                            <p class="text-muted small">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                {{ restaurant.address|truncatechars:30 }}
+                            </p>
+                            
+                            <a href="{% url 'restaurants:detail' restaurant.id %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-info-circle"></i> 詳細を見る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i> 
+                        検索条件に一致する店舗が見つかりませんでした。
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- ページネーション -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="検索結果ページネーション">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if keyword %}keyword={{ keyword }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i> 前へ
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-chevron-left"></i> 前へ</span>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if keyword %}keyword={{ keyword }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ num }}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if keyword %}keyword={{ keyword }}&{% endif %}{% if selected_category %}category={{ selected_category }}&{% endif %}{% if budget_min %}budget_min={{ budget_min }}&{% endif %}{% if budget_max %}budget_max={{ budget_max }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                次へ <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">次へ <i class="fas fa-chevron-right"></i></span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-store"></i> 登録されている店舗がありません。
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

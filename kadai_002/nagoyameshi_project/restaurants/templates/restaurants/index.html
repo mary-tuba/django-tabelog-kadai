@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ page_title }} - NAGOYAMESHI{% endblock %}
 
@@ -19,7 +20,12 @@
         <div class="row">
             {% for restaurant in restaurants %}
             <div class="col-md-4 mb-4">
-                <div class="card">
+                <div class="card h-100">
+                    {% if restaurant.image %}
+                    <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <img src="{% static 'images/no_image_yoko.jpg' %}" alt="No Image" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ restaurant.name }}</h5>
                         <p class="card-text">

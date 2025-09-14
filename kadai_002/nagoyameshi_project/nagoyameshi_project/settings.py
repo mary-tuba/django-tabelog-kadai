@@ -177,3 +177,17 @@ AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',  # 下位互換性のため
 ]
+
+# ログイン関連設定
+LOGIN_URL = 'accounts:login'
+LOGOUT_REDIRECT_URL = 'restaurants:index'
+LOGIN_REDIRECT_URL = 'restaurants:index'
+
+# Stripe設定
+# 環境変数から取得（Herokuではconfig varsから、ローカルでは.envから）
+STRIPE_PUBLIC_KEY = os.environ.get('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')  # Webhookを使う場合は設定
+
+# Stripe価格ID（月額300円のプラン）
+STRIPE_PRICE_ID = os.environ.get('STRIPE_PRICE_ID', '')

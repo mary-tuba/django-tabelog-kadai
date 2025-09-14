@@ -30,7 +30,7 @@
                         </ol>
                     </div>
 
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <div class="row">
@@ -82,6 +82,20 @@
                                     {{ form.website_url }}
                                     {% if form.website_url.errors %}
                                         <div class="text-danger small">{{ form.website_url.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- 店舗画像 -->
+                                <div class="mb-3">
+                                    <label for="{{ form.image.id_for_label }}" class="form-label">
+                                        {{ form.image.label }}
+                                    </label>
+                                    {{ form.image }}
+                                    {% if form.image.help_text %}
+                                        <div class="form-text">{{ form.image.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.image.errors %}
+                                        <div class="text-danger small">{{ form.image.errors.0 }}</div>
                                     {% endif %}
                                 </div>
                             </div>

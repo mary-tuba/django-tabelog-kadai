@@ -14,13 +14,18 @@
                 <a href="{% url 'accounts:profile_edit' %}" class="list-group-item list-group-item-action">プロフィール編集</a>
                 <a href="{% url 'accounts:password_change' %}" class="list-group-item list-group-item-action">パスワード変更</a>
                 {% if user.is_premium %}
-                    <a href="{% url 'accounts:premium_cancel' %}" class="list-group-item list-group-item-action">プレミアム会員解約</a>
+                    <a href="{% url 'payments:subscription' %}" class="list-group-item list-group-item-action">プレミアム会員</a>
+                    <a href="{% url 'restaurants:favorite_list' %}" class="list-group-item list-group-item-action">お気に入り店舗</a>
                 {% else %}
                     <a href="{% url 'accounts:premium_upgrade' %}" class="list-group-item list-group-item-action">プレミアム会員になる</a>
+                    <a href="#" class="list-group-item list-group-item-action disabled">お気に入り店舗</a>
                 {% endif %}
-                <a href="#" class="list-group-item list-group-item-action">お気に入り店舗</a>
                 <a href="#" class="list-group-item list-group-item-action">予約履歴</a>
-                <a href="#" class="list-group-item list-group-item-action">レビュー履歴</a>
+                {% if user.is_premium %}
+                    <a href="{% url 'reviews:my_reviews' %}" class="list-group-item list-group-item-action">レビュー履歴</a>
+                {% else %}
+                    <a href="#" class="list-group-item list-group-item-action disabled">レビュー履歴</a>
+                {% endif %}
                 <a href="{% url 'accounts:delete_account' %}" class="list-group-item list-group-item-action text-danger">
                     <i class="fas fa-user-times"></i> 退会手続き
                 </a>
@@ -90,7 +95,9 @@
                 </table>
                 
                 <div class="mt-4">
-                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">編集する</a>
+                    <a href="{% url 'accounts:profile_edit' %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> 編集する
+                    </a>
                 </div>
             </div>
         </div>

@@ -108,7 +108,7 @@ def restaurant_list(request):
 def restaurant_create(request):
     """管理者用店舗作成"""
     if request.method == 'POST':
-        form = AdminRestaurantCreateForm(request.POST)
+        form = AdminRestaurantCreateForm(request.POST, request.FILES)
         if form.is_valid():
             restaurant = form.save()
             if restaurant.is_active:
@@ -160,6 +160,10 @@ def restaurant_edit(request, restaurant_id):
             restaurant.budget_max = int(budget_max) if budget_max else 5000
         except ValueError:
             messages.error(request, '予算は数値で入力してください。')
+        
+        # 画像の更新
+        if 'image' in request.FILES:
+            restaurant.image = request.FILES['image']
         
         # 承認状態の更新
         is_active = request.POST.get('is_active') == '1'

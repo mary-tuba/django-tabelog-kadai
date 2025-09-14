@@ -9,7 +9,8 @@ urlpatterns = [
     path('success/', views.payment_success, name='success'),
     path('cancel/', views.payment_cancel, name='cancel'),
     
-    # µÖ¹¯ê×·çó¡
+    # ï¿½Ö¹ï¿½ï¿½×·ï¿½ï¿½
     path('subscription/', views.subscription_detail, name='subscription'),
     path('subscription/cancel/', views.cancel_subscription, name='cancel_subscription'),
+    path('subscription/update-card/', views.update_card, name='update_card'),
 ]

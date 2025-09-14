@@ -38,7 +38,7 @@
                     </dl>
                 </div>
 
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <div class="row">
@@ -77,6 +77,19 @@
                                 <label for="description" class="form-label">店舗説明</label>
                                 <textarea class="form-control" id="description" name="description" rows="4" 
                                           placeholder="店舗の特徴、雰囲気、おすすめ料理などをご記入ください">{{ restaurant.description }}</textarea>
+                            </div>
+                            
+                            <!-- 店舗画像 -->
+                            <div class="mb-3">
+                                <label for="image" class="form-label">店舗画像</label>
+                                {% if restaurant.image %}
+                                    <div class="mb-2">
+                                        <img src="{{ restaurant.image.url }}" alt="{{ restaurant.name }}" class="img-thumbnail" style="max-width: 200px;">
+                                        <p class="small text-muted mt-1">現在の画像</p>
+                                    </div>
+                                {% endif %}
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <div class="form-text">新しい画像をアップロードすると現在の画像が置き換わります</div>
                             </div>
                             
                             <!-- 承認状態 -->

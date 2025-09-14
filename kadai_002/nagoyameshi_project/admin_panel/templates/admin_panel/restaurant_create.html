@@ -22,7 +22,7 @@
                     <p class="mb-0">管理者として店舗を直接作成できます。承認状態を選択して即座に公開することも可能です。</p>
                 </div>
 
-                <form method="POST">
+                <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     
                     <div class="row">
@@ -64,6 +64,20 @@
                                     <div class="text-danger small">{{ form.description.errors.0 }}</div>
                                 {% endif %}
                                 <div class="form-text">店舗の特徴、雰囲気、おすすめ料理などをご記入ください</div>
+                            </div>
+                            
+                            <!-- 店舗画像 -->
+                            <div class="mb-3">
+                                <label for="{{ form.image.id_for_label }}" class="form-label">
+                                    {{ form.image.label }}
+                                </label>
+                                {{ form.image }}
+                                {% if form.image.help_text %}
+                                    <div class="form-text">{{ form.image.help_text }}</div>
+                                {% endif %}
+                                {% if form.image.errors %}
+                                    <div class="text-danger small">{{ form.image.errors.0 }}</div>
+                                {% endif %}
                             </div>
                             
                             <!-- 承認状態 -->

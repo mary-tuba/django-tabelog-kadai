@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}レビュー編集 - {{ restaurant.name }} - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">レビュー編集</h3>
+            </div>
+            <div class="card-body">
+                <!-- 店舗情報 -->
+                <div class="card mb-3 bg-light">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                {% if restaurant.image %}
+                                    <img src="{{ restaurant.image.url }}" class="img-fluid rounded" alt="{{ restaurant.name }}">
+                                {% else %}
+                                    <img src="/media/restaurants/no_image_yoko.jpg" class="img-fluid rounded" alt="No Image">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-9">
+                                <h5>{{ restaurant.name }}</h5>
+                                <p class="mb-1"><i class="fas fa-folder"></i> {{ restaurant.category.name }}</p>
+                                <p class="mb-1"><i class="fas fa-map-marker-alt"></i> {{ restaurant.address }}</p>
+                                <p class="mb-0"><i class="fas fa-yen-sign"></i> 予算: {{ restaurant.budget_min }}円〜{{ restaurant.budget_max }}円</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- レビューフォーム -->
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- 評価 -->
+                    <div class="mb-3">
+                        <label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }} <span class="text-danger">*</span></label>
+                        <div class="star-rating">
+                            {{ form.rating }}
+                        </div>
+                        {% if form.rating.errors %}
+                            <div class="text-danger small">{{ form.rating.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- コメント -->
+                    <div class="mb-3">
+                        <label for="{{ form.comment.id_for_label }}" class="form-label">{{ form.comment.label }}</label>
+                        {{ form.comment }}
+                        {% if form.comment.errors %}
+                            <div class="text-danger small">{{ form.comment.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            <small>最大1000文字まで</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'restaurants:detail' restaurant.id %}" class="btn btn-secondary">キャンセル</a>
+                        <button type="submit" class="btn btn-primary">レビューを更新</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.star-rating {
+    display: flex;
+    gap: 10px;
+}
+.star-rating input[type="radio"] {
+    display: none;
+}
+.star-rating label {
+    cursor: pointer;
+    font-size: 24px;
+    color: #ddd;
+}
+.star-rating label:before {
+    content: '★';
+}
+.star-rating input[type="radio"]:checked ~ label {
+    color: #ffc107;
+}
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+    color: #ffc107;
+}
+</style>
+
+<script>
+// 星評価のインタラクティブ機能
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingField = document.getElementById('{{ form.rating.id_for_label }}');
+    if (ratingField) {
+        const currentValue = ratingField.value;
+        const container = ratingField.parentElement;
+        container.innerHTML = '';
+        
+        for (let i = 5; i >= 1; i--) {
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'rating';
+            radio.value = i;
+            radio.id = `star${i}`;
+            if (i == currentValue) radio.checked = true;
+            
+            const label = document.createElement('label');
+            label.htmlFor = `star${i}`;
+            
+            container.appendChild(radio);
+            container.appendChild(label);
+        }
+    }
+});
+</script>
+{% endblock %}
