@@ -1,2 +1,4 @@
 *.env
 kadai_002/nagoyameshi_project/.env
+kadai_002/nagoyameshi_project/db.sqlite3
+kadai_002/nagoyameshi_project/accounts/__pycache__/views.cpython-313.pyc
