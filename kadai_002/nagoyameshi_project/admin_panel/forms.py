@@ -2,6 +2,8 @@ from django import forms
 from .models import CompanyInfo
 from restaurants.models import Restaurant
 from categories.models import Category
+import csv
+import io
 
 
 class CompanyInfoForm(forms.ModelForm):
@@ -220,3 +222,124 @@ class AdminRestaurantCreateForm(forms.ModelForm):
             if not postal_code.isdigit() or len(postal_code) != 7:
                 raise forms.ValidationError('郵便番号は7桁の数字で入力してください（例: 1234567）')
         return postal_code
+
+
+class CSVUploadForm(forms.Form):
+    """CSV一括アップロード用フォーム"""
+    
+    csv_file = forms.FileField(
+        label='CSVファイル',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.csv'
+        }),
+        help_text='UTF-8エンコードのCSVファイルをアップロードしてください'
+    )
+    
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data['csv_file']
+        
+        # ファイル拡張子のチェック
+        if not csv_file.name.endswith('.csv'):
+            raise forms.ValidationError('CSVファイルをアップロードしてください。')
+        
+        # ファイルサイズのチェック（10MB以下）
+        if csv_file.size > 10 * 1024 * 1024:
+            raise forms.ValidationError('ファイルサイズは10MB以下にしてください。')
+        
+        # CSVファイルの内容チェック
+        try:
+            # ファイルをテキストとして読み込み
+            csv_file.seek(0)
+            decoded_file = csv_file.read().decode('utf-8-sig')  # utf-8-sigでBOMを自動除去
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            # ヘッダーチェック
+            required_columns = ['店舗名', 'カテゴリ', '住所']
+            if reader.fieldnames:
+                # BOMを除去したフィールド名のリストを作成
+                cleaned_fieldnames = []
+                for field in reader.fieldnames:
+                    # BOMや余分な空白を削除
+                    cleaned_field = field.strip().replace('\ufeff', '').replace('﻿', '')
+                    cleaned_fieldnames.append(cleaned_field)
+                
+                missing_columns = set(required_columns) - set(cleaned_fieldnames)
+                if missing_columns:
+                    # デバッグ情報を含めたエラーメッセージ
+                    raise forms.ValidationError(
+                        f'必須列が不足しています: {", ".join(missing_columns)}。'
+                        f'検出された列: {", ".join(cleaned_fieldnames)}'
+                    )
+            
+            # 最初の行を読んでデータがあることを確認
+            first_row = next(reader, None)
+            if not first_row:
+                raise forms.ValidationError('CSVファイルにデータが含まれていません。')
+            
+            # ファイルポインタを先頭に戻す
+            csv_file.seek(0)
+            
+        except UnicodeDecodeError:
+            raise forms.ValidationError('CSVファイルのエンコードがUTF-8ではありません。')
+        except Exception as e:
+            raise forms.ValidationError(f'CSVファイルの読み込みエラー: {str(e)}')
+        
+        return csv_file
+
+
+class CategoryCSVUploadForm(forms.Form):
+    """カテゴリCSV一括アップロード用フォーム"""
+    
+    csv_file = forms.FileField(
+        label='CSVファイル',
+        widget=forms.FileInput(attrs={
+            'class': 'form-control',
+            'accept': '.csv'
+        }),
+        help_text='UTF-8エンコードのCSVファイルをアップロードしてください'
+    )
+    
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data['csv_file']
+        
+        # ファイル拡張子のチェック
+        if not csv_file.name.endswith('.csv'):
+            raise forms.ValidationError('CSVファイルをアップロードしてください。')
+        
+        # ファイルサイズのチェック（5MB以下）
+        if csv_file.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('ファイルサイズは5MB以下にしてください。')
+        
+        # CSVファイルの内容チェック
+        try:
+            # ファイルをテキストとして読み込み
+            csv_file.seek(0)
+            decoded_file = csv_file.read().decode('utf-8-sig')  # utf-8-sigでBOMを自動除去
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            # ヘッダーチェック
+            required_columns = ['カテゴリ名']
+            if reader.fieldnames:
+                missing_columns = set(required_columns) - set(reader.fieldnames)
+                if missing_columns:
+                    raise forms.ValidationError(
+                        f'必須列が不足しています: {", ".join(missing_columns)}'
+                    )
+            
+            # 最初の行を読んでデータがあることを確認
+            first_row = next(reader, None)
+            if not first_row:
+                raise forms.ValidationError('CSVファイルにデータが含まれていません。')
+            
+            # ファイルポインタを先頭に戻す
+            csv_file.seek(0)
+            
+        except UnicodeDecodeError:
+            raise forms.ValidationError('CSVファイルのエンコードがUTF-8ではありません。')
+        except Exception as e:
+            raise forms.ValidationError(f'CSVファイルの読み込みエラー: {str(e)}')
+        
+        return csv_file

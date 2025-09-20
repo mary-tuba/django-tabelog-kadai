@@ -37,13 +37,17 @@
                     
                     <!-- 評価 -->
                     <div class="mb-3">
-                        <label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }} <span class="text-danger">*</span></label>
-                        <div class="star-rating">
-                            {{ form.rating }}
+                        <label class="form-label">評価 <span class="text-danger">*</span></label>
+                        <div class="star-rating" id="star-rating-container">
+                            <!-- 星評価をここに生成 -->
                         </div>
+                        <input type="hidden" name="rating" id="rating-input" value="{{ form.rating.value|default:review.rating }}">
                         {% if form.rating.errors %}
                             <div class="text-danger small">{{ form.rating.errors.0 }}</div>
                         {% endif %}
+                        <div class="form-text">
+                            <small>クリックして評価を選択してください</small>
+                        </div>
                     </div>
                     
                     <!-- コメント -->
@@ -71,24 +75,18 @@
 <style>
 .star-rating {
     display: flex;
-    gap: 10px;
+    gap: 5px;
+    font-size: 30px;
 }
-.star-rating input[type="radio"] {
-    display: none;
-}
-.star-rating label {
+.star-rating .star {
     cursor: pointer;
-    font-size: 24px;
     color: #ddd;
+    transition: color 0.2s;
 }
-.star-rating label:before {
-    content: '★';
-}
-.star-rating input[type="radio"]:checked ~ label {
+.star-rating .star.active {
     color: #ffc107;
 }
-.star-rating label:hover,
-.star-rating label:hover ~ label {
+.star-rating .star:hover {
     color: #ffc107;
 }
 </style>
@@ -96,26 +94,66 @@
 <script>
 // 星評価のインタラクティブ機能
 document.addEventListener('DOMContentLoaded', function() {
-    const ratingField = document.getElementById('{{ form.rating.id_for_label }}');
-    if (ratingField) {
-        const currentValue = ratingField.value;
-        const container = ratingField.parentElement;
-        container.innerHTML = '';
+    const container = document.getElementById('star-rating-container');
+    const ratingInput = document.getElementById('rating-input');
+    const currentValue = parseInt(ratingInput.value) || 0;
+    
+    // 星を生成
+    for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star';
+        star.innerHTML = '★';
+        star.dataset.rating = i;
         
-        for (let i = 5; i >= 1; i--) {
-            const radio = document.createElement('input');
-            radio.type = 'radio';
-            radio.name = 'rating';
-            radio.value = i;
-            radio.id = `star${i}`;
-            if (i == currentValue) radio.checked = true;
-            
-            const label = document.createElement('label');
-            label.htmlFor = `star${i}`;
-            
-            container.appendChild(radio);
-            container.appendChild(label);
+        // 初期値に基づいて星を塗りつぶす
+        if (i <= currentValue) {
+            star.classList.add('active');
         }
+        
+        // クリックイベント
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.dataset.rating);
+            ratingInput.value = rating;
+            updateStars(rating);
+        });
+        
+        // ホバーイベント
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.dataset.rating);
+            highlightStars(rating);
+        });
+        
+        container.appendChild(star);
+    }
+    
+    // マウスが離れたら元に戻す
+    container.addEventListener('mouseleave', function() {
+        const currentRating = parseInt(ratingInput.value) || 0;
+        updateStars(currentRating);
+    });
+    
+    // 星を更新する関数
+    function updateStars(rating) {
+        const stars = container.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+    
+    // ホバー時の星をハイライトする関数
+    function highlightStars(rating) {
+        const stars = container.querySelectorAll('.star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.style.color = '#ffc107';
+            } else {
+                star.style.color = '#ddd';
+            }
+        });
     }
 });
 </script>

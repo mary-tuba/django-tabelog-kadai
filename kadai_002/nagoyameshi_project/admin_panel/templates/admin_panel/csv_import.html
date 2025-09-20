@@ -1,0 +1,148 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}店舗CSV一括登録 - 管理者パネル{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3">店舗CSV一括登録</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-csv"></i> CSVファイルアップロード</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.csv_file.id_for_label }}" class="form-label">
+                                {{ form.csv_file.label }}
+                            </label>
+                            {{ form.csv_file }}
+                            {% if form.csv_file.help_text %}
+                                <div class="form-text">{{ form.csv_file.help_text }}</div>
+                            {% endif %}
+                            {% if form.csv_file.errors %}
+                                <div class="text-danger small">{{ form.csv_file.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> CSVファイル形式について</h6>
+                            <ul class="mb-0">
+                                <li>文字コード: UTF-8</li>
+                                <li>区切り文字: カンマ（,）</li>
+                                <li>1行目: ヘッダー行（必須）</li>
+                                <li>最大ファイルサイズ: 10MB</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_panel:restaurant_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> インポート実行
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-download"></i> サンプルファイル</h5>
+                </div>
+                <div class="card-body">
+                    <p>CSVファイルの形式を確認できるサンプルファイルをダウンロードできます。</p>
+                    <a href="{% url 'admin_panel:csv_download_sample' %}" class="btn btn-outline-primary btn-block">
+                        <i class="fas fa-file-download"></i> サンプルCSVダウンロード
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> 必須列一覧</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>列名</th>
+                                <th>必須</th>
+                                <th>説明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>店舗名</td>
+                                <td><span class="badge bg-danger">必須</span></td>
+                                <td>店舗の名前</td>
+                            </tr>
+                            <tr>
+                                <td>カテゴリ</td>
+                                <td><span class="badge bg-danger">必須</span></td>
+                                <td>和食、中華など</td>
+                            </tr>
+                            <tr>
+                                <td>住所</td>
+                                <td><span class="badge bg-danger">必須</span></td>
+                                <td>店舗の住所</td>
+                            </tr>
+                            <tr>
+                                <td>説明</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>店舗の説明文</td>
+                            </tr>
+                            <tr>
+                                <td>郵便番号</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>ハイフンなし7桁</td>
+                            </tr>
+                            <tr>
+                                <td>電話番号</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>ハイフン付き</td>
+                            </tr>
+                            <tr>
+                                <td>営業時間</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>例: 11:00-22:00</td>
+                            </tr>
+                            <tr>
+                                <td>定休日</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>例: 月曜日</td>
+                            </tr>
+                            <tr>
+                                <td>予算下限</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>数値（デフォルト: 0）</td>
+                            </tr>
+                            <tr>
+                                <td>予算上限</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>数値（デフォルト: 5000）</td>
+                            </tr>
+                            <tr>
+                                <td>承認状態</td>
+                                <td><span class="badge bg-secondary">任意</span></td>
+                                <td>TRUE/FALSE（デフォルト: TRUE）</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -10,6 +10,9 @@ urlpatterns = [
     # 店舗管理
     path('restaurants/', views.restaurant_list, name='restaurant_list'),
     path('restaurants/create/', views.restaurant_create, name='restaurant_create'),
+    path('restaurants/csv-import/', views.csv_import, name='csv_import'),
+    path('restaurants/csv-sample/', views.csv_download_sample, name='csv_download_sample'),
+    path('restaurants/csv-export/', views.restaurant_csv_export, name='restaurant_csv_export'),
     path('restaurants/<int:restaurant_id>/edit/', views.restaurant_edit, name='restaurant_edit'),
     path('restaurants/<int:restaurant_id>/approve/', views.restaurant_approve, name='restaurant_approve'),
     path('restaurants/<int:restaurant_id>/reject/', views.restaurant_reject, name='restaurant_reject'),
@@ -40,6 +43,7 @@ urlpatterns = [
     
     # 売上管理
     path('sales/', views.sales_report, name='sales_report'),
+    path('sales/daily/', views.sales_daily_report, name='sales_daily_report'),
     
     # 管理者管理機能
     path('admin-user/create/', views.admin_user_create, name='admin_user_create'),
@@ -53,6 +57,9 @@ urlpatterns = [
     # カテゴリ管理
     path('categories/', views.category_list, name='category_list'),
     path('categories/create/', views.category_create, name='category_create'),
+    path('categories/csv-import/', views.category_csv_import, name='category_csv_import'),
+    path('categories/csv-sample/', views.category_csv_download_sample, name='category_csv_download_sample'),
+    path('categories/csv-export/', views.category_csv_export, name='category_csv_export'),
     path('categories/<int:category_id>/edit/', views.category_edit, name='category_edit'),
     path('categories/<int:category_id>/delete/', views.category_delete, name='category_delete'),
 ]

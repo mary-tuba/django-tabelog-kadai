@@ -1,0 +1,341 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}日付別売上詳細 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_panel:sales_report' %}">売上管理</a></li>
+<li class="breadcrumb-item active">日付別詳細</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-calendar-alt"></i> 日付別売上詳細</h1>
+        
+        <!-- 月選択 -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'admin_panel:sales_report' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-chart-line"></i> 月別ビューに戻る
+            </a>
+            <form method="get" class="d-flex gap-2">
+                <select name="year" class="form-select" style="width: auto;">
+                    {% for year in years %}
+                        <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}年</option>
+                    {% endfor %}
+                </select>
+                <select name="month" class="form-select" style="width: auto;">
+                    {% for month in months %}
+                        <option value="{{ month.value }}" {% if month.value == selected_month %}selected{% endif %}>{{ month.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> 表示
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 月間サマリーカード -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">月間新規登録</h6>
+                    <h3 class="mb-0">+{{ month_stats.total_new }}名</h3>
+                    <small>平均: {{ month_stats.average_daily_new|floatformat:1 }}名/日</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title">月間解約</h6>
+                    <h3 class="mb-0">-{{ month_stats.total_cancelled }}名</h3>
+                    <small>解約率: {% if month_stats.total_new > 0 %}{{ month_stats.total_cancelled|floatformat:0 }}%{% else %}0%{% endif %}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">純増</h6>
+                    <h3 class="mb-0">
+                        {% if month_stats.net_growth >= 0 %}+{% endif %}{{ month_stats.net_growth }}名
+                    </h3>
+                    <small>成長率: {% if month_stats.total_new > 0 %}{{ month_stats.net_growth|floatformat:0 }}%{% else %}0%{% endif %}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">月間売上</h6>
+                    <h3 class="mb-0">¥{{ month_stats.total_revenue|floatformat:0 }}</h3>
+                    <small>@¥{{ monthly_fee }}/月</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- カレンダービュー -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar"></i> 
+                        {{ selected_year }}年{{ selected_month }}月の日別実績
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr class="table-light">
+                                    <th width="10%">日付</th>
+                                    <th width="8%">曜日</th>
+                                    <th width="15%">新規登録</th>
+                                    <th width="15%">解約</th>
+                                    <th width="15%">純増</th>
+                                    <th width="15%">累計会員</th>
+                                    <th width="22%">日次売上</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in daily_data %}
+                                <tr class="{% if data.is_today %}table-warning{% elif data.is_weekend %}table-light{% endif %} {% if data.is_future %}text-muted{% endif %}">
+                                    <td class="text-center">
+                                        <strong>{{ data.day }}日</strong>
+                                        {% if data.is_today %}
+                                            <span class="badge bg-warning text-dark">今日</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center {% if data.is_weekend %}text-danger{% endif %}">
+                                        {{ data.weekday }}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if data.new_count > 0 %}
+                                            <span class="text-success fw-bold">+{{ data.new_count }}</span>
+                                        {% else %}
+                                            <span class="text-muted">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if data.cancelled_count > 0 %}
+                                            <span class="text-danger">-{{ data.cancelled_count }}</span>
+                                        {% else %}
+                                            <span class="text-muted">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% with net=data.new_count|add:"-"|add:data.cancelled_count %}
+                                            {% if net > 0 %}
+                                                <span class="text-success">+{{ net }}</span>
+                                            {% elif net < 0 %}
+                                                <span class="text-danger">{{ net }}</span>
+                                            {% else %}
+                                                <span class="text-muted">0</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="text-center">
+                                        <strong>{{ data.total_count }}</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if data.daily_revenue > 0 %}
+                                            <strong>¥{{ data.daily_revenue|floatformat:0 }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">¥0</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-secondary">
+                                    <th colspan="2">合計</th>
+                                    <th class="text-center text-success">+{{ month_stats.total_new }}</th>
+                                    <th class="text-center text-danger">-{{ month_stats.total_cancelled }}</th>
+                                    <th class="text-center">
+                                        {% if month_stats.net_growth >= 0 %}
+                                            <span class="text-success">+{{ month_stats.net_growth }}</span>
+                                        {% else %}
+                                            <span class="text-danger">{{ month_stats.net_growth }}</span>
+                                        {% endif %}
+                                    </th>
+                                    <th>-</th>
+                                    <th class="text-end">
+                                        <strong>¥{{ month_stats.total_revenue|floatformat:0 }}</strong>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日別グラフ -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> 日別新規登録推移</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- サイドパネル -->
+        <div class="col-md-4">
+            <!-- ベスト/ワースト -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-trophy"></i> パフォーマンス</h5>
+                </div>
+                <div class="card-body">
+                    {% if best_day %}
+                    <div class="mb-3">
+                        <h6 class="text-success">
+                            <i class="fas fa-crown"></i> 最高実績日
+                        </h6>
+                        <div class="ps-3">
+                            <strong>{{ best_day.day }}日（{{ best_day.weekday }}）</strong><br>
+                            新規登録: <span class="badge bg-success">+{{ best_day.new_count }}名</span><br>
+                            売上: ¥{{ best_day.daily_revenue|floatformat:0 }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if worst_day %}
+                    <div>
+                        <h6 class="text-danger">
+                            <i class="fas fa-chart-down"></i> 最低実績日
+                        </h6>
+                        <div class="ps-3">
+                            <strong>{{ worst_day.day }}日（{{ worst_day.weekday }}）</strong><br>
+                            新規登録: <span class="badge bg-danger">{{ worst_day.new_count }}名</span><br>
+                            売上: ¥{{ worst_day.daily_revenue|floatformat:0 }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 曜日別統計 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-week"></i> 曜日別統計</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>曜日</th>
+                                <th>合計</th>
+                                <th>平均</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day_name, stats in weekday_stats.items %}
+                            <tr {% if day_name == '土' or day_name == '日' %}class="table-light"{% endif %}>
+                                <td {% if day_name == '土' or day_name == '日' %}class="text-danger"{% endif %}>
+                                    {{ day_name }}
+                                </td>
+                                <td>{{ stats.total_new }}名</td>
+                                <td>{{ stats.average|floatformat:1 }}名</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 新規登録ユーザー -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-plus"></i> 今月の新規会員</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% for data in daily_data %}
+                        {% if data.new_count > 0 %}
+                            {% for user in data.new_users %}
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <div>
+                                    <strong>{{ user.username }}</strong><br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        {{ data.day }}日<br>
+                                        {{ user.date_joined|date:"H:i" }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if month_stats.total_new == 0 %}
+                        <p class="text-muted text-center">新規登録がありません</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 日別グラフ
+const ctx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [{% for data in daily_data %}'{{ data.day }}日'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [
+            {
+                label: '新規登録',
+                data: [{% for data in daily_data %}{{ data.new_count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1
+            },
+            {
+                label: '解約',
+                data: [{% for data in daily_data %}-{{ data.cancelled_count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgb(255, 99, 132)',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return value + '名';
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + Math.abs(context.parsed.y) + '名';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

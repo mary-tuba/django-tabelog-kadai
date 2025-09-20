@@ -1,0 +1,105 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}カテゴリCSV一括登録 - 管理者パネル{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3">カテゴリCSV一括登録</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-csv"></i> CSVファイルアップロード</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.csv_file.id_for_label }}" class="form-label">
+                                {{ form.csv_file.label }}
+                            </label>
+                            {{ form.csv_file }}
+                            {% if form.csv_file.help_text %}
+                                <div class="form-text">{{ form.csv_file.help_text }}</div>
+                            {% endif %}
+                            {% if form.csv_file.errors %}
+                                <div class="text-danger small">{{ form.csv_file.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> CSVファイル形式について</h6>
+                            <ul class="mb-0">
+                                <li>文字コード: UTF-8</li>
+                                <li>区切り文字: カンマ（,）</li>
+                                <li>1行目: ヘッダー行（必須）</li>
+                                <li>最大ファイルサイズ: 5MB</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_panel:category_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 戻る
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> インポート実行
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-download"></i> サンプルファイル</h5>
+                </div>
+                <div class="card-body">
+                    <p>CSVファイルの形式を確認できるサンプルファイルをダウンロードできます。</p>
+                    <a href="{% url 'admin_panel:category_csv_download_sample' %}" class="btn btn-outline-primary btn-block">
+                        <i class="fas fa-file-download"></i> サンプルCSVダウンロード
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list"></i> 必須列一覧</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>列名</th>
+                                <th>必須</th>
+                                <th>説明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>カテゴリ名</td>
+                                <td><span class="badge bg-danger">必須</span></td>
+                                <td>カテゴリの名前</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            重複するカテゴリ名は登録されません
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

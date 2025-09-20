@@ -1,0 +1,334 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}売上管理 | {% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">売上管理</li>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-chart-line"></i> 売上管理</h1>
+        
+        <!-- 月選択 -->
+        <div class="d-flex gap-2">
+            <a href="{% url 'admin_panel:sales_daily_report' %}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar-alt"></i> 日付別詳細
+            </a>
+            <form method="get" class="d-flex gap-2">
+            <select name="year" class="form-select" style="width: auto;">
+                {% for year in years %}
+                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}年</option>
+                {% endfor %}
+            </select>
+            <select name="month" class="form-select" style="width: auto;">
+                {% for month in months %}
+                    <option value="{{ month.value }}" {% if month.value == selected_month %}selected{% endif %}>{{ month.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter"></i> 表示
+            </button>
+        </form>
+        </div>
+    </div>
+
+    <!-- 主要指標カード -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">アクティブ会員数</h6>
+                            <h3 class="mb-0">{{ active_premium_users }}名</h3>
+                            <small>総会員: {{ total_premium_users }}名</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-users fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">月間売上予測</h6>
+                            <h3 class="mb-0">¥{{ estimated_monthly_revenue|floatformat:0|default:"0" }}</h3>
+                            <small>月額 ¥{{ monthly_fee }} × {{ active_premium_users }}名</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-yen-sign fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">年間売上予測</h6>
+                            <h3 class="mb-0">¥{{ estimated_yearly_revenue|floatformat:0|default:"0" }}</h3>
+                            <small>月間 × 12ヶ月</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-chart-bar fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title">今月の新規会員</h6>
+                            <h3 class="mb-0">+{{ new_premium_this_month }}名</h3>
+                            <small>{{ selected_year }}年{{ selected_month }}月</small>
+                        </div>
+                        <div>
+                            <i class="fas fa-user-plus fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- グラフとテーブル -->
+    <div class="row">
+        <!-- 売上推移グラフ -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-area"></i> 過去6ヶ月の推移</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="100"></canvas>
+                </div>
+            </div>
+            
+            <!-- カテゴリ別人気度 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tags"></i> カテゴリ別人気度（レビュー数）</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>カテゴリ</th>
+                                    <th>店舗数</th>
+                                    <th>レビュー数</th>
+                                    <th>人気度</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in category_stats %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>{{ category.restaurant_count }}</td>
+                                    <td>{{ category.review_count }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            {% if category_stats.0.review_count > 0 %}
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {% widthratio category.review_count category_stats.0.review_count 100 %}%">
+                                                    {{ category.review_count }}
+                                                </div>
+                                            {% else %}
+                                                <div class="progress-bar bg-secondary" style="width: 0%">0</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">データがありません</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- サイドパネル -->
+        <div class="col-md-4">
+            <!-- KPI -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-tachometer-alt"></i> KPI</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-muted small">月額料金</label>
+                        <h4>¥{{ monthly_fee }}</h4>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">解約率（推定）</label>
+                        <h4>{{ churn_rate }}%</h4>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted small">ARPU（1人あたり売上）</label>
+                        <h4>¥{{ monthly_fee }}</h4>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 最近のプレミアム会員 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> 最新のプレミアム会員</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for user in recent_premium_users %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        {{ user.date_joined|date:"m/d" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">データがありません</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 月別売上テーブル -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-table"></i> 月別売上データ</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>年月</th>
+                            <th>プレミアム会員数</th>
+                            <th>売上予測</th>
+                            <th>前月比</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in monthly_data %}
+                        <tr>
+                            <td>{{ data.month }}</td>
+                            <td>{{ data.count }}名</td>
+                            <td>¥{{ data.revenue|floatformat:0 }}</td>
+                            <td>
+                                {% if forloop.counter > 1 %}
+                                    {% with prev=monthly_data|slice:forloop.counter0|last %}
+                                        {% if data.count > prev.count %}
+                                            <span class="text-success">
+                                                <i class="fas fa-arrow-up"></i>
+                                                +{{ data.count|add:prev.count|stringformat:"-d" }}
+                                            </span>
+                                        {% elif data.count < prev.count %}
+                                            <span class="text-danger">
+                                                <i class="fas fa-arrow-down"></i>
+                                                {{ data.count|add:prev.count|stringformat:"-d" }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">
+                                                <i class="fas fa-minus"></i> 0
+                                            </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 売上推移グラフ
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [{% for data in monthly_data %}'{{ data.month }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [
+            {
+                label: '会員数',
+                data: [{% for data in monthly_data %}{{ data.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                yAxisID: 'y',
+            },
+            {
+                label: '売上（円）',
+                data: [{% for data in monthly_data %}{{ data.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                yAxisID: 'y1',
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: '会員数'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: '売上（円）'
+                },
+                grid: {
+                    drawOnChartArea: false,
+                },
+            },
+        }
+    },
+});
+</script>
+{% endblock %}

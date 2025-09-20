@@ -10,9 +10,17 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>カテゴリ管理</h1>
-        <a href="{% url 'admin_panel:category_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> 新規カテゴリ作成
-        </a>
+        <div>
+            <a href="{% url 'admin_panel:category_csv_export' %}" class="btn btn-info me-2">
+                <i class="fas fa-download"></i> CSVエクスポート
+            </a>
+            <a href="{% url 'admin_panel:category_csv_import' %}" class="btn btn-success me-2">
+                <i class="fas fa-file-csv"></i> CSV一括登録
+            </a>
+            <a href="{% url 'admin_panel:category_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> 新規カテゴリ作成
+            </a>
+        </div>
     </div>
 
     <div class="row mb-4">

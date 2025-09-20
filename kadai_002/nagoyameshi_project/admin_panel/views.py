@@ -8,6 +8,7 @@ from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.db.models import Count
 from django.db import models
 import csv
+import io
 from django.http import HttpResponse
 from django.utils import timezone
 from accounts.forms import CustomUserCreationForm
@@ -16,7 +17,7 @@ from reviews.models import Review
 from reservations.models import Reservation
 from categories.models import Category
 from .models import CompanyInfo
-from .forms import CompanyInfoForm, AdminRestaurantCreateForm
+from .forms import CompanyInfoForm, AdminRestaurantCreateForm, CSVUploadForm, CategoryCSVUploadForm
 from reviews.forms import AdminReviewCreateForm
 
 User = get_user_model()
@@ -368,12 +369,13 @@ def review_list(request):
     # ベースクエリ
     reviews = Review.objects.select_related('user', 'restaurant', 'restaurant__category').order_by('-created_at')
     
-    # 検索機能
+    # 検索機能（メールアドレス検索も追加）
     if search_query:
         reviews = reviews.filter(
             models.Q(comment__icontains=search_query) |
             models.Q(restaurant__name__icontains=search_query) |
-            models.Q(user__username__icontains=search_query)
+            models.Q(user__username__icontains=search_query) |
+            models.Q(user__email__icontains=search_query)
         )
     
     # ステータスフィルター
@@ -614,7 +616,259 @@ def reservation_delete(request, reservation_id):
 
 @staff_member_required
 def sales_report(request):
-    return HttpResponse('<h1>売上管理</h1><p>工事中です</p>')
+    """売上管理ページ"""
+    from django.db.models import Count, Sum, Avg, Q
+    from django.utils import timezone
+    from datetime import datetime, timedelta
+    from accounts.models import User
+    import calendar
+    
+    # 現在の日時
+    now = timezone.now()
+    today = now.date()
+    
+    # 月の選択（デフォルトは現在の月）
+    selected_year = int(request.GET.get('year', now.year))
+    selected_month = int(request.GET.get('month', now.month))
+    
+    # 選択された月の最初と最後の日を計算
+    first_day = datetime(selected_year, selected_month, 1, tzinfo=timezone.get_current_timezone())
+    last_day = datetime(selected_year, selected_month, 
+                       calendar.monthrange(selected_year, selected_month)[1], 
+                       23, 59, 59, tzinfo=timezone.get_current_timezone())
+    
+    # プレミアム会員の統計
+    total_premium_users = User.objects.filter(is_premium=True).count()
+    active_premium_users = User.objects.filter(
+        is_premium=True,
+        is_active=True
+    ).count()
+    
+    # 今月の新規プレミアム会員数（簡易的に実装）
+    new_premium_this_month = User.objects.filter(
+        is_premium=True,
+        date_joined__gte=first_day,
+        date_joined__lte=last_day
+    ).count()
+    
+    # 月額料金（300円）
+    monthly_fee = 300
+    
+    # 予想売上計算
+    estimated_monthly_revenue = active_premium_users * monthly_fee
+    estimated_yearly_revenue = estimated_monthly_revenue * 12
+    
+    # 過去6ヶ月のプレミアム会員数の推移
+    monthly_data = []
+    for i in range(5, -1, -1):
+        target_date = now - timedelta(days=30*i)
+        month_start = datetime(target_date.year, target_date.month, 1, tzinfo=timezone.get_current_timezone())
+        month_end = datetime(target_date.year, target_date.month,
+                           calendar.monthrange(target_date.year, target_date.month)[1],
+                           23, 59, 59, tzinfo=timezone.get_current_timezone())
+        
+        premium_count = User.objects.filter(
+            is_premium=True,
+            date_joined__lte=month_end
+        ).count()
+        
+        monthly_data.append({
+            'month': f"{target_date.year}/{target_date.month:02d}",
+            'count': premium_count,
+            'revenue': premium_count * monthly_fee
+        })
+    
+    # カテゴリ別レビュー数（人気カテゴリの分析）
+    category_stats = Category.objects.annotate(
+        restaurant_count=Count('restaurant'),
+        review_count=Count('restaurant__review')
+    ).order_by('-review_count')[:10]
+    
+    # 最近のプレミアム会員登録
+    recent_premium_users = User.objects.filter(
+        is_premium=True
+    ).order_by('-date_joined')[:10]
+    
+    # 解約率の計算（仮想的な計算）
+    # 実際にはStripeのWebhookでサブスクリプションキャンセルを追跡する必要がある
+    total_ever_premium = User.objects.filter(
+        Q(is_premium=True) | Q(date_joined__lt=now - timedelta(days=30))
+    ).count()
+    churn_rate = 0 if total_ever_premium == 0 else ((total_ever_premium - active_premium_users) / total_ever_premium * 100)
+    
+    context = {
+        'selected_year': selected_year,
+        'selected_month': selected_month,
+        'total_premium_users': total_premium_users,
+        'active_premium_users': active_premium_users,
+        'new_premium_this_month': new_premium_this_month,
+        'monthly_fee': monthly_fee,
+        'estimated_monthly_revenue': estimated_monthly_revenue,
+        'estimated_yearly_revenue': estimated_yearly_revenue,
+        'monthly_data': monthly_data,
+        'category_stats': category_stats,
+        'recent_premium_users': recent_premium_users,
+        'churn_rate': round(churn_rate, 1),
+        'current_year': now.year,
+        'current_month': now.month,
+        'years': range(2024, now.year + 2),
+        'months': [
+            {'value': 1, 'name': '1月'},
+            {'value': 2, 'name': '2月'},
+            {'value': 3, 'name': '3月'},
+            {'value': 4, 'name': '4月'},
+            {'value': 5, 'name': '5月'},
+            {'value': 6, 'name': '6月'},
+            {'value': 7, 'name': '7月'},
+            {'value': 8, 'name': '8月'},
+            {'value': 9, 'name': '9月'},
+            {'value': 10, 'name': '10月'},
+            {'value': 11, 'name': '11月'},
+            {'value': 12, 'name': '12月'},
+        ]
+    }
+    
+    return render(request, 'admin_panel/sales_report.html', context)
+
+
+@staff_member_required
+def sales_daily_report(request):
+    """日付別売上詳細ページ"""
+    from django.db.models import Count, Q
+    from django.utils import timezone
+    from datetime import datetime, timedelta, date
+    from accounts.models import User
+    import calendar
+    
+    # 現在の日時
+    now = timezone.now()
+    
+    # 月の選択（デフォルトは現在の月）
+    selected_year = int(request.GET.get('year', now.year))
+    selected_month = int(request.GET.get('month', now.month))
+    
+    # 選択された月の日数を取得
+    days_in_month = calendar.monthrange(selected_year, selected_month)[1]
+    
+    # 月額料金
+    monthly_fee = 300
+    
+    # 日別データを生成
+    daily_data = []
+    month_total_new = 0
+    month_total_cancelled = 0
+    
+    for day in range(1, days_in_month + 1):
+        day_start = datetime(selected_year, selected_month, day, 0, 0, 0, tzinfo=timezone.get_current_timezone())
+        day_end = datetime(selected_year, selected_month, day, 23, 59, 59, tzinfo=timezone.get_current_timezone())
+        
+        # その日の新規プレミアム会員
+        new_users = User.objects.filter(
+            is_premium=True,
+            date_joined__gte=day_start,
+            date_joined__lte=day_end
+        )
+        new_count = new_users.count()
+        
+        # その日までの累計プレミアム会員数
+        total_count = User.objects.filter(
+            is_premium=True,
+            date_joined__lte=day_end
+        ).count()
+        
+        # キャンセル数（仮想的に計算 - 実際にはStripe Webhookで追跡が必要）
+        # ここでは簡易的に、非アクティブになったユーザーをカウント
+        cancelled_count = User.objects.filter(
+            is_premium=False,
+            last_login__gte=day_start,
+            last_login__lte=day_end,
+            date_joined__lt=day_start  # 以前に登録していたユーザー
+        ).count()
+        
+        # 日別売上（新規登録分）
+        daily_revenue = new_count * monthly_fee
+        
+        # 曜日を取得
+        weekday = ['月', '火', '水', '木', '金', '土', '日'][day_start.weekday()]
+        
+        # 週末かどうか
+        is_weekend = day_start.weekday() >= 5
+        
+        daily_data.append({
+            'date': day_start.date(),
+            'day': day,
+            'weekday': weekday,
+            'is_weekend': is_weekend,
+            'new_users': new_users,
+            'new_count': new_count,
+            'cancelled_count': cancelled_count,
+            'total_count': total_count,
+            'daily_revenue': daily_revenue,
+            'is_today': day_start.date() == now.date(),
+            'is_future': day_start.date() > now.date(),
+        })
+        
+        month_total_new += new_count
+        month_total_cancelled += cancelled_count
+    
+    # 月間統計
+    month_stats = {
+        'total_new': month_total_new,
+        'total_cancelled': month_total_cancelled,
+        'net_growth': month_total_new - month_total_cancelled,
+        'total_revenue': month_total_new * monthly_fee,
+        'average_daily_new': month_total_new / days_in_month if days_in_month > 0 else 0,
+    }
+    
+    # 曜日別統計
+    weekday_stats = {}
+    for day_name in ['月', '火', '水', '木', '金', '土', '日']:
+        day_entries = [d for d in daily_data if d['weekday'] == day_name]
+        if day_entries:
+            weekday_stats[day_name] = {
+                'total_new': sum(d['new_count'] for d in day_entries),
+                'average': sum(d['new_count'] for d in day_entries) / len(day_entries),
+            }
+        else:
+            weekday_stats[day_name] = {'total_new': 0, 'average': 0}
+    
+    # 最も成績の良い日と悪い日
+    if daily_data:
+        best_day = max(daily_data, key=lambda x: x['new_count'])
+        worst_day = min([d for d in daily_data if not d['is_future']], key=lambda x: x['new_count'], default=None)
+    else:
+        best_day = None
+        worst_day = None
+    
+    context = {
+        'selected_year': selected_year,
+        'selected_month': selected_month,
+        'daily_data': daily_data,
+        'month_stats': month_stats,
+        'weekday_stats': weekday_stats,
+        'best_day': best_day,
+        'worst_day': worst_day,
+        'monthly_fee': monthly_fee,
+        'current_year': now.year,
+        'current_month': now.month,
+        'years': range(2024, now.year + 2),
+        'months': [
+            {'value': 1, 'name': '1月'},
+            {'value': 2, 'name': '2月'},
+            {'value': 3, 'name': '3月'},
+            {'value': 4, 'name': '4月'},
+            {'value': 5, 'name': '5月'},
+            {'value': 6, 'name': '6月'},
+            {'value': 7, 'name': '7月'},
+            {'value': 8, 'name': '8月'},
+            {'value': 9, 'name': '9月'},
+            {'value': 10, 'name': '10月'},
+            {'value': 11, 'name': '11月'},
+            {'value': 12, 'name': '12月'},
+        ]
+    }
+    
+    return render(request, 'admin_panel/sales_daily_report.html', context)
 
 
 # 管理者管理機能
@@ -1007,3 +1261,349 @@ def category_delete(request, category_id):
     }
     
     return render(request, 'admin_panel/category_delete.html', context)
+
+
+@staff_member_required
+def csv_import(request):
+    """CSV一括インポート"""
+    if request.method == 'POST':
+        form = CSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            
+            # CSVファイルを読み込み
+            decoded_file = csv_file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            reader = csv.DictReader(io_string)
+            
+            success_count = 0
+            error_count = 0
+            errors = []
+            
+            for row_number, row in enumerate(reader, start=2):  # ヘッダー行を1とする
+                try:
+                    # BOMを除去した新しい辞書を作成
+                    cleaned_row = {}
+                    for key, value in row.items():
+                        # キーからBOMを除去
+                        cleaned_key = key.strip().replace('\ufeff', '').replace('﻿', '') if key else ''
+                        # 値からもBOMを除去
+                        cleaned_value = value.strip().replace('\ufeff', '').replace('﻿', '') if value else ''
+                        cleaned_row[cleaned_key] = cleaned_value
+                    
+                    # カテゴリを取得または作成
+                    category_name = cleaned_row.get('カテゴリ', '').strip()
+                    if category_name:
+                        category, _ = Category.objects.get_or_create(
+                            name=category_name
+                        )
+                    else:
+                        category = None
+                    
+                    # 予算の処理
+                    budget_min = cleaned_row.get('予算下限', '0').strip()
+                    budget_max = cleaned_row.get('予算上限', '5000').strip()
+                    
+                    try:
+                        budget_min = int(budget_min) if budget_min else 0
+                    except ValueError:
+                        budget_min = 0
+                    
+                    try:
+                        budget_max = int(budget_max) if budget_max else 5000
+                    except ValueError:
+                        budget_max = 5000
+                    
+                    # 店舗を作成
+                    restaurant = Restaurant(
+                        name=cleaned_row.get('店舗名', '').strip(),
+                        description=cleaned_row.get('説明', '').strip(),
+                        category=category,
+                        postal_code=cleaned_row.get('郵便番号', '').strip(),
+                        address=cleaned_row.get('住所', '').strip(),
+                        phone_number=cleaned_row.get('電話番号', '').strip(),
+                        opening_hours=cleaned_row.get('営業時間', '').strip(),
+                        closed_days=cleaned_row.get('定休日', '').strip(),
+                        budget_min=budget_min,
+                        budget_max=budget_max,
+                        is_active=cleaned_row.get('承認状態', 'TRUE').upper() == 'TRUE'
+                    )
+                    restaurant.save()
+                    success_count += 1
+                    
+                except Exception as e:
+                    error_count += 1
+                    errors.append(f'行 {row_number}: {str(e)}')
+            
+            # 結果メッセージ
+            if success_count > 0:
+                messages.success(request, f'{success_count}件の店舗を正常にインポートしました。')
+            
+            if error_count > 0:
+                messages.warning(request, f'{error_count}件のエラーが発生しました。')
+                for error in errors[:5]:  # 最初の5件のエラーを表示
+                    messages.error(request, error)
+                if len(errors) > 5:
+                    messages.error(request, f'他 {len(errors) - 5}件のエラーがあります。')
+            
+            if success_count > 0:
+                return redirect('admin_panel:restaurant_list')
+    else:
+        form = CSVUploadForm()
+    
+    # サンプルCSVの列定義
+    sample_columns = [
+        '店舗名', 'カテゴリ', '説明', '郵便番号', '住所', 
+        '電話番号', '営業時間', '定休日', '予算下限', '予算上限', '承認状態'
+    ]
+    
+    context = {
+        'form': form,
+        'sample_columns': sample_columns,
+    }
+    
+    return render(request, 'admin_panel/csv_import.html', context)
+
+
+@staff_member_required
+def csv_download_sample(request):
+    """サンプルCSVダウンロード"""
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="restaurant_sample.csv"'
+    
+    # BOMを追加（Excel対応）
+    response.write('\ufeff')
+    
+    writer = csv.writer(response)
+    
+    # ヘッダー行
+    writer.writerow([
+        '店舗名', 'カテゴリ', '説明', '郵便番号', '住所', 
+        '電話番号', '営業時間', '定休日', '予算下限', '予算上限', '承認状態'
+    ])
+    
+    # サンプルデータ
+    writer.writerow([
+        '和食処 さくら', '和食', '新鮮な魚介と季節の野菜を使った本格和食', 
+        '4500001', '愛知県名古屋市中村区那古野1-1-1', '052-123-4567', 
+        '11:00-14:00, 17:00-22:00', '月曜日', '1000', '3000', 'TRUE'
+    ])
+    writer.writerow([
+        'イタリアン トラットリア', 'イタリアン', '本場イタリアの味をカジュアルに', 
+        '4500002', '愛知県名古屋市中村区名駅2-2-2', '052-234-5678', 
+        '11:30-15:00, 18:00-23:00', '火曜日', '2000', '5000', 'TRUE'
+    ])
+    
+    return response
+
+
+@staff_member_required
+def restaurant_csv_export(request):
+    """店舗データCSVエクスポート"""
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="restaurants_export.csv"'
+    
+    # BOMを追加（Excel対応）
+    response.write('\ufeff')
+    
+    writer = csv.writer(response)
+    
+    # ヘッダー行
+    writer.writerow([
+        'ID', '店舗名', 'カテゴリ', '説明', '郵便番号', '住所', 
+        '電話番号', '営業時間', '定休日', '予算下限', '予算上限', 
+        '承認状態', '作成日', '更新日'
+    ])
+    
+    # フィルタリング条件の取得
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', 'all')
+    category_filter = request.GET.get('category', 'all')
+    
+    # クエリセットの作成
+    restaurants = Restaurant.objects.all()
+    
+    # 検索フィルタ
+    if search_query:
+        restaurants = restaurants.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(address__icontains=search_query)
+        )
+    
+    # 承認状態フィルタ
+    if status_filter == 'pending':
+        restaurants = restaurants.filter(is_active=False)
+    elif status_filter == 'approved':
+        restaurants = restaurants.filter(is_active=True)
+    
+    # カテゴリフィルタ
+    if category_filter != 'all':
+        try:
+            category_id = int(category_filter)
+            restaurants = restaurants.filter(category_id=category_id)
+        except (ValueError, TypeError):
+            pass
+    
+    # データ行を書き込み
+    for restaurant in restaurants.select_related('category'):
+        writer.writerow([
+            restaurant.id,
+            restaurant.name,
+            restaurant.category.name if restaurant.category else '',
+            restaurant.description,
+            restaurant.postal_code,
+            restaurant.address,
+            restaurant.phone_number,
+            restaurant.opening_hours,
+            restaurant.closed_days,
+            restaurant.budget_min,
+            restaurant.budget_max,
+            'TRUE' if restaurant.is_active else 'FALSE',
+            restaurant.created_at.strftime('%Y-%m-%d %H:%M:%S') if restaurant.created_at else '',
+            restaurant.updated_at.strftime('%Y-%m-%d %H:%M:%S') if restaurant.updated_at else ''
+        ])
+    
+    return response
+
+
+@staff_member_required
+def category_csv_import(request):
+    """カテゴリCSV一括インポート"""
+    if request.method == 'POST':
+        form = CategoryCSVUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = form.cleaned_data['csv_file']
+            
+            try:
+                # CSVファイルを読み込み（BOM対応）
+                decoded_file = csv_file.read().decode('utf-8-sig')  # utf-8-sigでBOMを自動除去
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                
+                success_count = 0
+                error_list = []
+                
+                for row_num, row in enumerate(reader, start=2):
+                    try:
+                        # カテゴリ名の取得
+                        name = row.get('カテゴリ名', '').strip()
+                        
+                        if not name:
+                            error_list.append(f'行 {row_num}: カテゴリ名が空です')
+                            continue
+                        
+                        # 既存のカテゴリをチェック（大文字小文字を区別しない）
+                        if Category.objects.filter(name__iexact=name).exists():
+                            error_list.append(f'行 {row_num}: カテゴリ「{name}」は既に存在します')
+                            continue
+                        
+                        # カテゴリを作成
+                        Category.objects.create(name=name)
+                        success_count += 1
+                        
+                    except Exception as e:
+                        error_list.append(f'行 {row_num}: エラー - {str(e)}')
+                
+                # 結果メッセージの生成
+                if success_count > 0:
+                    messages.success(request, f'{success_count}件のカテゴリを登録しました。')
+                
+                if error_list:
+                    error_message = '<br>'.join(error_list[:10])  # 最初の10件のエラーを表示
+                    if len(error_list) > 10:
+                        error_message += f'<br>他 {len(error_list) - 10}件のエラー'
+                    messages.warning(request, mark_safe(f'以下のエラーが発生しました：<br>{error_message}'))
+                
+                if success_count > 0:
+                    return redirect('admin_panel:category_list')
+                    
+            except Exception as e:
+                messages.error(request, f'CSVファイルの処理中にエラーが発生しました: {str(e)}')
+    else:
+        form = CategoryCSVUploadForm()
+    
+    # サンプル列情報
+    sample_columns = [
+        {'name': 'カテゴリ名', 'required': True, 'description': 'カテゴリの名前'},
+    ]
+    
+    context = {
+        'form': form,
+        'sample_columns': sample_columns,
+    }
+    
+    return render(request, 'admin_panel/category_csv_import.html', context)
+
+
+@staff_member_required
+def category_csv_download_sample(request):
+    """カテゴリサンプルCSVダウンロード"""
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="category_sample.csv"'
+    
+    # BOMを追加（Excel対応）
+    response.write('\ufeff')
+    
+    writer = csv.writer(response)
+    
+    # ヘッダー行
+    writer.writerow(['カテゴリ名'])
+    
+    # サンプルデータ
+    sample_categories = [
+        '和食',
+        '寿司',
+        '焼肉',
+        'ラーメン',
+        '中華料理',
+        'イタリアン',
+        'フレンチ',
+        'カフェ',
+        '居酒屋',
+        'バー',
+        'パン・スイーツ',
+        'エスニック料理',
+        '韓国料理',
+        'ステーキ・ハンバーグ',
+        'そば・うどん',
+    ]
+    
+    for category in sample_categories:
+        writer.writerow([category])
+    
+    return response
+
+
+@staff_member_required
+def category_csv_export(request):
+    """カテゴリデータCSVエクスポート"""
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = 'attachment; filename="categories_export.csv"'
+    
+    # BOMを追加（Excel対応）
+    response.write('\ufeff')
+    
+    writer = csv.writer(response)
+    
+    # ヘッダー行
+    writer.writerow(['ID', 'カテゴリ名', '説明', '店舗数', '作成日', '更新日'])
+    
+    # すべてのカテゴリを取得
+    categories = Category.objects.all().order_by('name')
+    
+    # データ行を書き込み
+    for category in categories:
+        # カテゴリに属する店舗数を取得
+        restaurant_count = Restaurant.objects.filter(category=category).count()
+        
+        writer.writerow([
+            category.id,
+            category.name,
+            category.description or '',
+            restaurant_count,
+            category.created_at.strftime('%Y-%m-%d %H:%M:%S') if category.created_at else '',
+            category.updated_at.strftime('%Y-%m-%d %H:%M:%S') if category.updated_at else ''
+        ])
+    
+    return response

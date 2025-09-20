@@ -72,7 +72,7 @@
             <div class="col-md-4">
                 <label for="search" class="form-label">キーワード検索</label>
                 <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ search_query }}" placeholder="コメント、店舗名、ユーザー名で検索">
+                       value="{{ search_query }}" placeholder="コメント、店舗名、ユーザー名、メールアドレスで検索">
             </div>
             
             <div class="col-md-3">
@@ -118,6 +118,7 @@
                         <tr>
                             <th>ID</th>
                             <th>ユーザー</th>
+                            <th>メールアドレス</th>
                             <th>店舗</th>
                             <th>評価</th>
                             <th>コメント</th>
@@ -135,6 +136,9 @@
                                 {% if review.user.is_premium %}
                                     <span class="badge bg-warning text-dark">プレミアム</span>
                                 {% endif %}
+                            </td>
+                            <td>
+                                <a href="mailto:{{ review.user.email }}">{{ review.user.email }}</a>
                             </td>
                             <td>
                                 <a href="{% url 'restaurants:detail' review.restaurant.id %}" target="_blank">
