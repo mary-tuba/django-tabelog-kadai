@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}メール認証の再送信 - NAGOYAMESHI{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">
+                        <i class="fas fa-envelope"></i> メール認証の再送信
+                    </h2>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        メールアドレスの認証が完了していません。
+                    </div>
+                    
+                    <p>登録時のメールアドレス（{{ user.email }}）に認証メールを再送信します。</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> 認証メールを再送信
+                            </button>
+                            <a href="{% url 'restaurants:index' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> キャンセル
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-muted small">
+                        <p><i class="fas fa-question-circle"></i> メールが届かない場合：</p>
+                        <ul>
+                            <li>迷惑メールフォルダをご確認ください</li>
+                            <li>メールアドレスが正しいかご確認ください</li>
+                            <li>しばらく待ってから再度お試しください</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

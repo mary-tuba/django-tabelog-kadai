@@ -29,8 +29,36 @@
                 <div class="card-body">
                     <h6 class="card-title">総カテゴリ数</h6>
                     <h4 class="text-primary">{{ total_categories }}件</h4>
+                    {% if search_query %}
+                        <small class="text-muted">検索結果: {{ search_result_count }}件</small>
+                    {% endif %}
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- 検索フォーム -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="search" 
+                           value="{{ search_query }}" 
+                           placeholder="カテゴリ名や説明で検索...">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                </div>
+                {% if search_query %}
+                <div class="col-12 mt-2">
+                    <a href="{% url 'admin_panel:category_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-times"></i> 検索をクリア
+                    </a>
+                </div>
+                {% endif %}
+            </form>
         </div>
     </div>
 
@@ -53,10 +81,22 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for category in categories %}
+                            {% for category in page_obj %}
                             <tr>
                                 <td>{{ category.id }}</td>
-                                <td><strong>{{ category.name }}</strong></td>
+                                <td>
+                                    <a href="{% url 'admin_panel:restaurant_list' %}?category={{ category.id }}" 
+                                       class="text-decoration-none text-primary">
+                                        <strong>{{ category.name }}</strong>
+                                    </a>
+                                    {% if category.restaurant_count > 0 %}
+                                        <br>
+                                        <a href="{% url 'admin_panel:restaurant_list' %}?category={{ category.id }}" 
+                                           class="text-muted text-decoration-none">
+                                            <small>{{ category.restaurant_count }}店舗</small>
+                                        </a>
+                                    {% endif %}
+                                </td>
                                 <td>{{ category.description|truncatechars:50|default:"-" }}</td>
                                 <td>{{ category.created_at|date:"Y/m/d H:i" }}</td>
                                 <td>{{ category.updated_at|date:"Y/m/d H:i" }}</td>
@@ -75,6 +115,37 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- ページネーション -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="ページネーション" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">前へ</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">次へ</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
             {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>

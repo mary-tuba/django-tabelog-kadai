@@ -1,9 +1,15 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.conf import settings
 from .forms import CustomUserCreationForm, UserProfileForm, CustomPasswordChangeForm, AccountDeletionForm
+from .models import EmailVerificationToken
+from .email_utils import send_verification_email
 
 
 def login_view(request):
@@ -41,13 +47,21 @@ def signup_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            # ユーザーを作成
-            user = form.save()
+            # ユーザーを作成（メール未認証状態）
+            user = form.save(commit=False)
+            user.email_verified = False
+            user.save()
+            
+            # メール認証トークンを作成
+            token = EmailVerificationToken.objects.create(user=user)
+            
+            # 認証メールを送信
+            send_verification_email(request, user, token)
             
             # 自動ログイン（バックエンドを明示的に指定）
             login(request, user, backend='accounts.backends.EmailBackend')
             
-            messages.success(request, f'{user.username}さん、会員登録が完了しました！')
+            messages.success(request, f'{user.username}さん、会員登録が完了しました！認証メールを送信しました。')
             return redirect('restaurants:index')
         else:
             # フォームエラーがある場合
@@ -152,3 +166,65 @@ def delete_account_view(request):
         form = AccountDeletionForm(request.user)
     
     return render(request, 'accounts/delete_account.html', {'form': form})
+
+
+def verify_email(request, token):
+    """メールアドレスを認証"""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    # トークンを検証
+    verification_token = get_object_or_404(EmailVerificationToken, token=token)
+    
+    # 使用済みチェック
+    if verification_token.is_used:
+        messages.warning(request, 'このトークンは既に使用されています。')
+        return redirect('restaurants:index')
+    
+    # 有効期限チェック
+    if verification_token.is_expired():
+        messages.error(request, 'このトークンは有効期限が切れています。再度認証メールの送信をリクエストしてください。')
+        return redirect('accounts:resend_verification')
+    
+    # ユーザーのメールアドレスを認証
+    user = verification_token.user
+    user.email_verified = True
+    user.save()
+    
+    # トークンを使用済みにする
+    verification_token.is_used = True
+    verification_token.save()
+    
+    messages.success(request, 'メールアドレスが正常に認証されました！')
+    
+    # ログインしていない場合は自動ログイン
+    if not request.user.is_authenticated:
+        login(request, user, backend='accounts.backends.EmailBackend')
+    
+    return redirect('restaurants:index')
+
+
+@login_required
+def resend_verification(request):
+    """認証メール再送信"""
+    if request.user.email_verified:
+        messages.info(request, 'メールアドレスは既に認証済みです。')
+        return redirect('restaurants:index')
+    
+    if request.method == 'POST':
+        # 既存の未使用トークンを無効化
+        EmailVerificationToken.objects.filter(
+            user=request.user,
+            is_used=False
+        ).update(is_used=True)
+        
+        # 新しいトークンを作成
+        token = EmailVerificationToken.objects.create(user=request.user)
+        
+        # メールを送信
+        send_verification_email(request, request.user, token)
+        
+        messages.success(request, '認証メールを再送信しました。メールボックスをご確認ください。')
+        return redirect('restaurants:index')
+    
+    return render(request, 'accounts/resend_verification.html')

@@ -65,7 +65,8 @@ def restaurant_list(request):
         restaurants = restaurants.filter(
             models.Q(name__icontains=search_query) |
             models.Q(description__icontains=search_query) |
-            models.Q(address__icontains=search_query)
+            models.Q(address__icontains=search_query) |
+            models.Q(category__name__icontains=search_query)
         )
     
     # ステータスフィルター
@@ -1163,11 +1164,41 @@ def user_list_csv_export(request):
 @staff_member_required
 def category_list(request):
     """カテゴリ一覧"""
-    categories = Category.objects.all().order_by('name')
+    from django.db.models import Q, Count
+    
+    # 検索クエリの取得
+    search_query = request.GET.get('search', '')
+    
+    # ベースクエリセット
+    categories = Category.objects.all()
+    
+    # 検索フィルタリング
+    if search_query:
+        categories = categories.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    # 並び順
+    categories = categories.order_by('name')
+    
+    # 各カテゴリの店舗数を注釈として追加
+    categories = categories.annotate(
+        restaurant_count=Count('restaurant')
+    )
+    
+    # ページネーション
+    from django.core.paginator import Paginator
+    paginator = Paginator(categories, 20)  # 1ページに20件表示
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     context = {
-        'categories': categories,
-        'total_categories': categories.count(),
+        'categories': page_obj,
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_categories': Category.objects.count(),
+        'search_result_count': categories.count(),
     }
     
     return render(request, 'admin_panel/category_list.html', context)

@@ -20,4 +20,8 @@ urlpatterns = [
     
     # 退会
     path('delete/', views.delete_account_view, name='delete_account'),
+    
+    # メール認証
+    path('verify/<uuid:token>/', views.verify_email, name='verify_email'),
+    path('verify/resend/', views.resend_verification, name='resend_verification'),
 ]
